@@ -1,5 +1,7 @@
 package com.OpenOtkPlatform.domain;
 
+import java.util.Date;
+
 /**
  * 商品实体类
  */
@@ -11,28 +13,143 @@ public class Item {
     private Long sellerId;
     private Integer stock;
     private Boolean available;
+    private Date createTime;
+    private Date updateTime;
     
-    public Item() {} // TODO - finish me
-    public Item(String name, String description, Double price, Long sellerId, Integer stock) {} // TODO - finish me
+    public Item() {
+        this.stock = 0;
+        this.available = true;
+        this.createTime = new Date();
+        this.updateTime = new Date();
+    }
     
-    public Long getId() { return null; } // TODO - finish me
-    public void setId(Long id) {} // TODO - finish me
+    public Item(String name, String description, Double price, Long sellerId, Integer stock) {
+        this();
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.sellerId = sellerId;
+        this.stock = stock;
+        this.available = stock > 0;
+    }
     
-    public String getName() { return null; } // TODO - finish me
-    public void setName(String name) {} // TODO - finish me
+    public Long getId() {
+        return id;
+    }
     
-    public String getDescription() { return null; } // TODO - finish me
-    public void setDescription(String description) {} // TODO - finish me
+    public void setId(Long id) {
+        this.id = id;
+    }
     
-    public Double getPrice() { return null; } // TODO - finish me
-    public void setPrice(Double price) {} // TODO - finish me
+    public String getName() {
+        return name;
+    }
     
-    public Long getSellerId() { return null; } // TODO - finish me
-    public void setSellerId(Long sellerId) {} // TODO - finish me
+    public void setName(String name) {
+        this.name = name;
+        this.updateTime = new Date();
+    }
     
-    public Integer getStock() { return null; } // TODO - finish me
-    public void setStock(Integer stock) {} // TODO - finish me
+    public String getDescription() {
+        return description;
+    }
     
-    public Boolean getAvailable() { return null; } // TODO - finish me
-    public void setAvailable(Boolean available) {} // TODO - finish me
+    public void setDescription(String description) {
+        this.description = description;
+        this.updateTime = new Date();
+    }
+    
+    public Double getPrice() {
+        return price;
+    }
+    
+    public void setPrice(Double price) {
+        if (price >= 0) {
+            this.price = price;
+            this.updateTime = new Date();
+        }
+    }
+    
+    public Long getSellerId() {
+        return sellerId;
+    }
+    
+    public void setSellerId(Long sellerId) {
+        this.sellerId = sellerId;
+        this.updateTime = new Date();
+    }
+    
+    public Integer getStock() {
+        return stock;
+    }
+    
+    public void setStock(Integer stock) {
+        if (stock >= 0) {
+            this.stock = stock;
+            this.available = stock > 0;
+            this.updateTime = new Date();
+        }
+    }
+    
+    public Boolean getAvailable() {
+        return available;
+    }
+    
+    public void setAvailable(Boolean available) {
+        this.available = available;
+        this.updateTime = new Date();
+    }
+    
+    public Date getCreateTime() {
+        return createTime;
+    }
+    
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+    
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+    
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+    
+    public boolean isInStock() {
+        return stock > 0 && available;
+    }
+    
+    public boolean reduceStock(Integer quantity) {
+        if (quantity > 0 && stock >= quantity) {
+            stock -= quantity;
+            available = stock > 0;
+            updateTime = new Date();
+            return true;
+        }
+        return false;
+    }
+    
+    public void increaseStock(Integer quantity) {
+        if (quantity > 0) {
+            stock += quantity;
+            available = true;
+            updateTime = new Date();
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "Item{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                ", sellerId=" + sellerId +
+                ", stock=" + stock +
+                ", available=" + available +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                '}';
+    }
 }
