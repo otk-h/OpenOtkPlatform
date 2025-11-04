@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户中心 - OpenOtkPlatform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <h1><a href="index.html" style="color: inherit; text-decoration: none;">OpenOtkPlatform</a></h1>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="搜索商品..." class="search-input">
+                <button onclick="searchProducts()" class="search-btn">搜索</button>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">返回首页</a>
+                <span id="userInfo" class="user-info" style="display: none;"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 用户中心 -->
+    <main class="main">
+        <div class="container">
+            <div class="user-center">
+                <!-- 登录表单 -->
+                <div id="loginForm" class="auth-form">
+                    <h2>用户登录</h2>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="loginUsername">用户名</label>
+                            <input type="text" id="loginUsername" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <input type="password" id="loginPassword" required class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary">登录</button>
+                        <button type="button" onclick="showRegister()" class="btn btn-secondary">注册新账号</button>
+                    </form>
+                </div>
+
+                <!-- 注册表单 -->
+                <div id="registerForm" class="auth-form" style="display: none;">
+                    <h2>用户注册</h2>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label for="regUsername">用户名</label>
+                            <input type="text" id="regUsername" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">密码</label>
+                            <input type="password" id="regPassword" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="regEmail">邮箱</label>
+                            <input type="email" id="regEmail" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="regPhone">手机号</label>
+                            <input type="tel" id="regPhone" required class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary">注册</button>
+                        <button type="button" onclick="showLogin()" class="btn btn-secondary">返回登录</button>
+                    </form>
+                </div>
+
+                <!-- 用户信息 -->
+                <div id="userProfile" class="user-profile" style="display: none;">
+                    <h2>个人信息</h2>
+                    <div class="profile-info">
+                        <p><strong>用户名:</strong> <span id="profileUsername"></span></p>
+                        <p><strong>邮箱:</strong> <span id="profileEmail"></span></p>
+                        <p><strong>手机号:</strong> <span id="profilePhone"></span></p>
+                        <p><strong>余额:</strong> ¥<span id="profileBalance">0.00</span></p>
+                    </div>
+                    <div class="profile-actions">

@@ -5,37 +5,47 @@ import com.OpenOtkPlatform.service.OrderService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.service.ItemService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
-/**
- * 订单控制器类
- */
+@RestController
+@RequestMapping("/api/orders")
 public class OrderController {
+    
+    @Autowired
     private OrderService orderService;
+    
+    @Autowired
     private LogService logService;
+    
+    @Autowired
     private UserService userService;
+    
+    @Autowired
     private ItemService itemService;
     
-    public OrderController() {
-        this.orderService = OrderService.getInstance();
-        this.logService = LogService.getInstance();
-        this.userService = UserService.getInstance();
-        this.itemService = ItemService.getInstance();
-    }
-    
-    public Order createOrder(Long itemId, Long buyerId, Long sellerId, Double totalPrice) {
+    @PostMapping
+    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
+        Long itemId = request.getItemId();
+        Long buyerId = request.getBuyerId();
+        Long sellerId = request.getSellerId();
+        Double totalPrice = request.getTotalPrice();
+        
         if (itemId == null || itemId <= 0
             || buyerId == null || buyerId <= 0
             || sellerId == null || sellerId <= 0
             || totalPrice == null || totalPrice <= 0
         ) {
-            return null;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
         }
         
         // 验证买家余额是否足够
         Double buyerBalance = userService.getUserById(buyerId).getBalance();
         if (buyerBalance < totalPrice) {
-            return null;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "余额不足"));
         }
         
         Order order = orderService.createOrder(itemId, buyerId, sellerId, totalPrice);
@@ -45,124 +55,191 @@ public class OrderController {
             
             // 记录订单创建日志
             logService.logOrderCreate(buyerId, order.getId());
+            
+            return ResponseEntity.ok(order);
         }
-        return order;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单创建失败"));
     }
     
-    public Order getOrderById(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return null;
-        }
-        return orderService.getOrderById(orderId);
-    }
-    
-    public List<Order> getOrdersByBuyer(Long buyerId) {
-        if (buyerId == null || buyerId <= 0) {
-            return null;
-        }
-        return orderService.getOrdersByBuyer(buyerId);
-    }
-    
-    public List<Order> getOrdersBySeller(Long sellerId) {
-        if (sellerId == null || sellerId <= 0) {
-            return null;
-        }
-        return orderService.getOrdersBySeller(sellerId);
-    }
-    
-    public boolean updateOrderStatus(Long orderId, String status) {
-        if (orderId == null || orderId <= 0 || status == null || status.trim().isEmpty()) {
-            return false;
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOrderById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
         }
         
-        boolean success = orderService.updateOrderStatus(orderId, status);
+        Order order = orderService.getOrderById(id);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(order);
+    }
+    
+    @GetMapping("/buyer/{buyerId}")
+    public ResponseEntity<?> getOrdersByBuyer(@PathVariable Long buyerId) {
+        if (buyerId == null || buyerId <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "买家ID无效"));
+        }
+        
+        List<Order> orders = orderService.getOrdersByBuyer(buyerId);
+        return ResponseEntity.ok(orders);
+    }
+    
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<?> getOrdersBySeller(@PathVariable Long sellerId) {
+        if (sellerId == null || sellerId <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "卖家ID无效"));
+        }
+        
+        List<Order> orders = orderService.getOrdersBySeller(sellerId);
+        return ResponseEntity.ok(orders);
+    }
+    
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+        if (id == null || id <= 0 || status == null || status.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
+        }
+        
+        boolean success = orderService.updateOrderStatus(id, status);
         if (success) {
-            Order order = orderService.getOrderById(orderId);
+            Order order = orderService.getOrderById(id);
             if (order != null) {
                 logService.logUserOperation("UPDATE_ORDER_STATUS", order.getBuyerId(), 
-                    String.format("更新订单状态，订单ID: %d, 状态: %s", orderId, status));
+                    String.format("更新订单状态，订单ID: %d, 状态: %s", id, status));
             }
+            return ResponseEntity.ok(new ApiResponse(true, "订单状态更新成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单状态更新失败"));
     }
     
-    public boolean cancelOrder(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return false;
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
         }
         
-        Order order = orderService.getOrderById(orderId);
+        Order order = orderService.getOrderById(id);
         if (order == null) {
-            return false;
+            return ResponseEntity.notFound().build();
         }
         
-        boolean success = orderService.cancelOrder(orderId);
+        boolean success = orderService.cancelOrder(id);
         if (success) {
             // 恢复买家余额
             userService.rechargeBalance(order.getBuyerId(), order.getTotalPrice());
             
             logService.logUserOperation("CANCEL_ORDER", order.getBuyerId(), 
-                String.format("取消订单，订单ID: %d", orderId));
+                String.format("取消订单，订单ID: %d", id));
+            return ResponseEntity.ok(new ApiResponse(true, "订单取消成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单取消失败"));
     }
     
-    public boolean completeOrder(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return false;
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> completeOrder(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
         }
         
-        Order order = orderService.getOrderById(orderId);
+        Order order = orderService.getOrderById(id);
         if (order == null) {
-            return false;
+            return ResponseEntity.notFound().build();
         }
         
-        boolean success = orderService.completeOrder(orderId);
+        boolean success = orderService.completeOrder(id);
         if (success) {
             // 将款项转给卖家
             userService.rechargeBalance(order.getSellerId(), order.getTotalPrice());
             
             logService.logUserOperation("COMPLETE_ORDER", order.getBuyerId(), 
-                String.format("完成订单，订单ID: %d", orderId));
+                String.format("完成订单，订单ID: %d", id));
+            return ResponseEntity.ok(new ApiResponse(true, "订单完成成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单完成失败"));
     }
     
-    public String exchangeContactInfo(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return null;
+    @GetMapping("/{id}/contact")
+    public ResponseEntity<?> exchangeContactInfo(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
         }
         
-        String contactInfo = orderService.exchangeContactInfo(orderId);
+        String contactInfo = orderService.exchangeContactInfo(id);
         if (contactInfo != null) {
-            Order order = orderService.getOrderById(orderId);
+            Order order = orderService.getOrderById(id);
             if (order != null) {
                 logService.logUserOperation("EXCHANGE_CONTACT", order.getBuyerId(), 
-                    String.format("交换联系方式，订单ID: %d", orderId));
+                    String.format("交换联系方式，订单ID: %d", id));
             }
+            return ResponseEntity.ok(new ApiResponse(true, contactInfo));
         }
-        return contactInfo;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "无法获取联系方式"));
     }
     
-    public boolean validateOrder(Long itemId, Long buyerId) {
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateOrder(@RequestParam Long itemId, @RequestParam Long buyerId) {
         if (itemId == null || itemId <= 0 || buyerId == null || buyerId <= 0) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
         }
         
         // 验证商品是否存在且有库存
         if (!itemService.isItemAvailable(itemId)) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "商品不可用"));
         }
         
         // 验证买家是否存在
         if (userService.getUserById(buyerId) == null) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "买家不存在"));
         }
         
         // 验证买家余额是否足够
         Double itemPrice = itemService.getItemById(itemId).getPrice();
         Double buyerBalance = userService.getUserById(buyerId).getBalance();
         
-        return buyerBalance >= itemPrice;
+        if (buyerBalance >= itemPrice) {
+            return ResponseEntity.ok(new ApiResponse(true, "订单验证通过"));
+        } else {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "余额不足"));
+        }
+    }
+    
+    @GetMapping
+    public ResponseEntity<?> getAllOrders() {
+        List<Order> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
+    }
+    
+    // 请求DTO类
+    public static class CreateOrderRequest {
+        private Long itemId;
+        private Long buyerId;
+        private Long sellerId;
+        private Double totalPrice;
+        
+        // getters and setters
+        public Long getItemId() { return itemId; }
+        public void setItemId(Long itemId) { this.itemId = itemId; }
+        public Long getBuyerId() { return buyerId; }
+        public void setBuyerId(Long buyerId) { this.buyerId = buyerId; }
+        public Long getSellerId() { return sellerId; }
+        public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
+        public Double getTotalPrice() { return totalPrice; }
+        public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    }
+
+    public static class ApiResponse {
+        private boolean success;
+        private String message;
+        
+        public ApiResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+        
+        // getters and setters
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
     }
 }

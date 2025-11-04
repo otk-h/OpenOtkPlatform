@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - OpenOtkPlatform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <h1><a href="index.html" style="color: inherit; text-decoration: none;">OpenOtkPlatform</a></h1>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="搜索商品..." class="search-input">
+                <button onclick="searchProducts()" class="search-btn">搜索</button>
+            </div>
+            <div class="nav-menu">
+                <a href="user.html" class="nav-link">登录/注册</a>
+                <span id="userInfo" class="user-info" style="display: none;"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 商品详情 -->
+    <main class="main">
+        <div class="container">
+            <div class="product-detail">
+                <div class="product-image">
+                    <img src="https://via.placeholder.com/400x300/24292e/ffffff?text=商品图片" alt="商品图片" id="productImage">
+                </div>
+                <div class="product-info">
+                    <h1 id="productName">商品名称</h1>
+                    <p class="product-description" id="productDescription">商品描述信息...</p>
+                    <div class="product-price" id="productPrice">¥0.00</div>
+                    <div class="product-stock" id="productStock">库存: 0</div>
+                    <div class="product-seller" id="productSeller">卖家: 未知</div>
+                    
+                    <div class="product-actions">
+                        <button onclick="buyProduct()" class="btn btn-primary" id="buyBtn">立即购买</button>
+                        <a href="index.html" class="btn btn-secondary">返回首页</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 OpenOtkPlatform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // 页面加载时显示商品详情
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProductDetail();
+        });
+    </script>
+</body>
+</html>

@@ -1,15 +1,26 @@
 package com.OpenOtkPlatform.domain;
 
+import jakarta.persistence.*;
 import java.util.Date;
 
-/**
- * 系统日志实体类
- */
+@Entity
+@Table(name = "system_logs")
 public class SystemLog {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "operation_type", nullable = false, length = 50)
     private String operationType;
+    
+    @Column(name = "user_id")
     private Long userId;
+    
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+    
+    @Column(name = "create_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date createTime;
     
     public static final String OPERATION_LOGIN = "LOGIN";

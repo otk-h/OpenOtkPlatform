@@ -1,27 +1,20 @@
 package com.OpenOtkPlatform.service;
 
 import com.OpenOtkPlatform.domain.User;
-import com.OpenOtkPlatform.persistence.UserDAO;
+import com.OpenOtkPlatform.repository.UserRepository;
 import com.OpenOtkPlatform.util.PasswordUtil;
 import com.OpenOtkPlatform.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-/**
- * 用户服务类 - 单例模式
- */
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class UserService {
-    private static UserService instance;
-    private UserDAO userDAO;
     
-    private UserService() {
-        this.userDAO = new UserDAO();
-    }
-    
-    public static UserService getInstance() {
-        if (instance == null) {
-            instance = new UserService();
-        }
-        return instance;
-    }
+    @Autowired
+    private UserRepository userRepository;
     
     public boolean register(String username, String password, String email, String phone) {
         if (username == null || username.trim().isEmpty()
@@ -39,7 +32,12 @@ public class UserService {
         String encryptedPassword = PasswordUtil.encryptPassword(password);
         User newUser = new User(username, encryptedPassword, email, phone);
         
-        return userDAO.insertUser(newUser);
+        try {
+            userRepository.save(newUser);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public User login(String username, String password) {
@@ -49,9 +47,9 @@ public class UserService {
             return null;
         }
         
-        User user = userDAO.getUserByUsername(username);
-        if (user != null && PasswordUtil.verifyPassword(password, user.getPassword())) {
-            return user;
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent() && PasswordUtil.verifyPassword(password, userOpt.get().getPassword())) {
+            return userOpt.get();
         }
         return null;
     }
@@ -60,42 +58,52 @@ public class UserService {
         if (userId == null || userId <= 0) {
             return null;
         }
-        return userDAO.getUserById(userId);
+        return userRepository.findById(userId).orElse(null);
     }
     
     public User getUserByUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
             return null;
         }
-        return userDAO.getUserByUsername(username);
+        return userRepository.findByUsername(username).orElse(null);
     }
     
     public boolean updateUser(User user) {
         if (user == null || user.getId() == null) {
             return false;
         }
-        return userDAO.updateUser(user);
+        try {
+            userRepository.save(user);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean deleteUser(Long userId) {
         if (userId == null || userId <= 0) {
             return false;
         }
-        return userDAO.deleteUser(userId);
+        try {
+            userRepository.deleteById(userId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean isUsernameExists(String username) {
         if (username == null || username.trim().isEmpty()) {
             return false;
         }
-        return userDAO.isUsernameExists(username);
+        return userRepository.existsByUsername(username);
     }
     
     public boolean isEmailExists(String email) {
         if (email == null || email.trim().isEmpty()) {
             return false;
         }
-        return userDAO.isEmailExists(email);
+        return userRepository.existsByEmail(email);
     }
     
     public boolean rechargeBalance(Long userId, Double amount) {
@@ -105,13 +113,19 @@ public class UserService {
             return false;
         }
         
-        User user = userDAO.getUserById(userId);
-        if (user == null) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
             return false;
         }
         
+        User user = userOpt.get();
         user.addBalance(amount);
-        return userDAO.updateUserBalance(userId, user.getBalance());
+        try {
+            userRepository.save(user);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean deductBalance(Long userId, Double amount) {
@@ -121,14 +135,24 @@ public class UserService {
             return false;
         }
         
-        User user = userDAO.getUserById(userId);
-        if (user == null) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
             return false;
         }
         
+        User user = userOpt.get();
         if (user.deductBalance(amount)) {
-            return userDAO.updateUserBalance(userId, user.getBalance());
+            try {
+                userRepository.save(user);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
         }
         return false;
+    }
+    
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

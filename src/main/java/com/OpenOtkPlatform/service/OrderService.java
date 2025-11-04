@@ -1,32 +1,24 @@
 package com.OpenOtkPlatform.service;
 
 import com.OpenOtkPlatform.domain.Order;
-import com.OpenOtkPlatform.persistence.OrderDAO;
-import com.OpenOtkPlatform.service.ItemService;
-import com.OpenOtkPlatform.service.UserService;
-import java.util.List;
+import com.OpenOtkPlatform.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-/**
- * 订单服务类 - 单例模式
- */
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class OrderService {
-    private static OrderService instance;
-    private OrderDAO orderDAO;
+    
+    @Autowired
+    private OrderRepository orderRepository;
+    
+    @Autowired
     private ItemService itemService;
+    
+    @Autowired
     private UserService userService;
-    
-    private OrderService() {
-        this.orderDAO = new OrderDAO();
-        this.itemService = ItemService.getInstance();
-        this.userService = UserService.getInstance();
-    }
-    
-    public static OrderService getInstance() {
-        if (instance == null) {
-            instance = new OrderService();
-        }
-        return instance;
-    }
     
     public Order createOrder(Long itemId, Long buyerId, Long sellerId, Double totalPrice) {
         if (!validateOrderCreation(itemId, buyerId, sellerId)) {
@@ -34,32 +26,34 @@ public class OrderService {
         }
         
         Order newOrder = new Order(itemId, buyerId, sellerId, totalPrice);
-        if (orderDAO.insertOrder(newOrder)) {
+        try {
+            Order savedOrder = orderRepository.save(newOrder);
             itemService.reduceStock(itemId, 1);
-            return newOrder;
+            return savedOrder;
+        } catch (Exception e) {
+            return null;
         }
-        return null;
     }
     
     public Order getOrderById(Long orderId) {
         if (orderId == null || orderId <= 0) {
             return null;
         }
-        return orderDAO.getOrderById(orderId);
+        return orderRepository.findById(orderId).orElse(null);
     }
     
     public List<Order> getOrdersByBuyer(Long buyerId) {
         if (buyerId == null || buyerId <= 0) {
             return null;
         }
-        return orderDAO.getOrdersByBuyer(buyerId);
+        return orderRepository.findByBuyerId(buyerId);
     }
     
     public List<Order> getOrdersBySeller(Long sellerId) {
         if (sellerId == null || sellerId <= 0) {
             return null;
         }
-        return orderDAO.getOrdersBySeller(sellerId);
+        return orderRepository.findBySellerId(sellerId);
     }
     
     public boolean updateOrderStatus(Long orderId, String status) {
@@ -67,13 +61,19 @@ public class OrderService {
             return false;
         }
         
-        Order order = orderDAO.getOrderById(orderId);
-        if (order == null) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (!orderOpt.isPresent()) {
             return false;
         }
         
+        Order order = orderOpt.get();
         order.setStatus(status);
-        return orderDAO.updateOrder(order);
+        try {
+            orderRepository.save(order);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean cancelOrder(Long orderId) {
@@ -81,13 +81,19 @@ public class OrderService {
             return false;
         }
         
-        Order order = orderDAO.getOrderById(orderId);
-        if (order == null || !order.cancelOrder()) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (!orderOpt.isPresent() || !orderOpt.get().cancelOrder()) {
             return false;
         }
         
+        Order order = orderOpt.get();
         itemService.increaseStock(order.getItemId(), 1);
-        return orderDAO.updateOrder(order);
+        try {
+            orderRepository.save(order);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean completeOrder(Long orderId) {
@@ -95,12 +101,18 @@ public class OrderService {
             return false;
         }
         
-        Order order = orderDAO.getOrderById(orderId);
-        if (order == null || !order.completeOrder()) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (!orderOpt.isPresent() || !orderOpt.get().completeOrder()) {
             return false;
         }
         
-        return orderDAO.updateOrder(order);
+        Order order = orderOpt.get();
+        try {
+            orderRepository.save(order);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public String exchangeContactInfo(Long orderId) {
@@ -108,11 +120,12 @@ public class OrderService {
             return null;
         }
         
-        Order order = orderDAO.getOrderById(orderId);
-        if (order == null || !order.isConfirmed()) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (!orderOpt.isPresent() || !orderOpt.get().isConfirmed()) {
             return null;
         }
         
+        Order order = orderOpt.get();
         String buyerContact = userService.getUserById(order.getBuyerId()).getPhone();
         String sellerContact = userService.getUserById(order.getSellerId()).getPhone();
         
@@ -136,5 +149,9 @@ public class OrderService {
         }
         
         return !buyerId.equals(sellerId);
+    }
+    
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 }

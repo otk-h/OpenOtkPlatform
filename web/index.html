@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenOtkPlatform - 购物平台</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>OpenOtkPlatform</h1>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="搜索商品..." class="search-input">
+                <button onclick="searchProducts()" class="search-btn">搜索</button>
+            </div>
+            <div class="nav-menu">
+                <a href="user.html" class="nav-link">登录/注册</a>
+                <span id="userInfo" class="user-info" style="display: none;"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="main">
+        <div class="container">
+            <!-- 欢迎区域 -->
+            <section class="hero">
+                <h2>大标题</h2>
+                <p>小标题</p>
+            </section>
+
+            <!-- 商品列表 -->
+            <section class="products-section">
+                <h3>推荐商品</h3>
+                <div id="productsGrid" class="products-grid">
+                    <!-- 商品卡片将通过JavaScript动态生成 -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 OpenOtkPlatform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

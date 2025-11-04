@@ -5,23 +5,33 @@ import com.OpenOtkPlatform.service.ItemService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
-/**
- * 商品控制器类
- */
+@RestController
+@RequestMapping("/api/items")
 public class ItemController {
+    
+    @Autowired
     private ItemService itemService;
+    
+    @Autowired
     private LogService logService;
+    
+    @Autowired
     private UserService userService;
     
-    public ItemController() {
-        this.itemService = ItemService.getInstance();
-        this.logService = LogService.getInstance();
-        this.userService = UserService.getInstance();
-    }
-    
-    public boolean publishItem(String name, String description, Double price, Long sellerId, Integer stock) {
+    @PostMapping
+    public ResponseEntity<?> publishItem(@RequestBody PublishItemRequest request) {
+        String name = request.getName();
+        String description = request.getDescription();
+        Double price = request.getPrice();
+        Long sellerId = request.getSellerId();
+        Integer stock = request.getStock();
+        
         if (name == null || name.trim().isEmpty()
             || description == null || description.trim().isEmpty()
             || price == null || price <= 0
@@ -32,12 +42,12 @@ public class ItemController {
             || !ValidationUtil.isValidPrice(price)
             || !ValidationUtil.isValidStock(stock)
         ) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
         }
         
         // 验证卖家是否存在
         if (userService.getUserById(sellerId) == null) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "卖家不存在"));
         }
         
         boolean success = itemService.publishItem(name, description, price, sellerId, stock);
@@ -48,37 +58,58 @@ public class ItemController {
                 Item latestItem = sellerItems.get(sellerItems.size() - 1);
                 logService.logItemPublish(sellerId, latestItem.getId());
             }
+            return ResponseEntity.ok(new ApiResponse(true, "商品发布成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "商品发布失败"));
     }
     
-    public Item getItemById(Long itemId) {
-        if (itemId == null || itemId <= 0) {
-            return null;
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getItemById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "商品ID无效"));
         }
-        return itemService.getItemById(itemId);
+        
+        Item item = itemService.getItemById(id);
+        if (item == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(item);
     }
     
-    public List<Item> getAllItems() {
-        return itemService.getAllItems();
+    @GetMapping
+    public ResponseEntity<?> getAllItems() {
+        List<Item> items = itemService.getAllItems();
+        return ResponseEntity.ok(items);
     }
     
-    public List<Item> getItemsBySeller(Long sellerId) {
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<?> getItemsBySeller(@PathVariable Long sellerId) {
         if (sellerId == null || sellerId <= 0) {
-            return null;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "卖家ID无效"));
         }
-        return itemService.getItemsBySeller(sellerId);
+        
+        List<Item> items = itemService.getItemsBySeller(sellerId);
+        return ResponseEntity.ok(items);
     }
     
-    public List<Item> searchItems(String keyword) {
+    @GetMapping("/search")
+    public ResponseEntity<?> searchItems(@RequestParam String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllItems();
         }
-        return itemService.searchItems(keyword);
+        
+        List<Item> items = itemService.searchItems(keyword);
+        return ResponseEntity.ok(items);
     }
     
-    public boolean updateItem(Long itemId, String name, String description, Double price, Integer stock) {
-        if (itemId == null || itemId <= 0
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateItem(@PathVariable Long id, @RequestBody UpdateItemRequest request) {
+        String name = request.getName();
+        String description = request.getDescription();
+        Double price = request.getPrice();
+        Integer stock = request.getStock();
+        
+        if (id == null || id <= 0
             || name == null || name.trim().isEmpty()
             || description == null || description.trim().isEmpty()
             || price == null || price <= 0
@@ -88,12 +119,12 @@ public class ItemController {
             || !ValidationUtil.isValidPrice(price)
             || !ValidationUtil.isValidStock(stock)
         ) {
-            return false;
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
         }
         
-        Item item = itemService.getItemById(itemId);
+        Item item = itemService.getItemById(id);
         if (item == null) {
-            return false;
+            return ResponseEntity.notFound().build();
         }
         
         item.setName(name);
@@ -104,42 +135,101 @@ public class ItemController {
         boolean success = itemService.updateItem(item);
         if (success) {
             logService.logUserOperation("UPDATE_ITEM", item.getSellerId(), 
-                String.format("更新商品信息，商品ID: %d", itemId));
+                String.format("更新商品信息，商品ID: %d", id));
+            return ResponseEntity.ok(new ApiResponse(true, "商品更新成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "商品更新失败"));
     }
     
-    public boolean deleteItem(Long itemId) {
-        if (itemId == null || itemId <= 0) {
-            return false;
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteItem(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "商品ID无效"));
         }
         
-        Item item = itemService.getItemById(itemId);
+        Item item = itemService.getItemById(id);
         if (item == null) {
-            return false;
+            return ResponseEntity.notFound().build();
         }
         
-        boolean success = itemService.deleteItem(itemId);
+        boolean success = itemService.deleteItem(id);
         if (success) {
             logService.logUserOperation("DELETE_ITEM", item.getSellerId(), 
-                String.format("删除商品，商品ID: %d", itemId));
+                String.format("删除商品，商品ID: %d", id));
+            return ResponseEntity.ok(new ApiResponse(true, "商品删除成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "商品删除失败"));
     }
     
-    public boolean reduceStock(Long itemId, Integer quantity) {
-        if (itemId == null || itemId <= 0 || quantity == null || quantity <= 0) {
-            return false;
+    @PostMapping("/{id}/reduce-stock")
+    public ResponseEntity<?> reduceStock(@PathVariable Long id, @RequestParam Integer quantity) {
+        if (id == null || id <= 0 || quantity == null || quantity <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
         }
         
-        boolean success = itemService.reduceStock(itemId, quantity);
+        boolean success = itemService.reduceStock(id, quantity);
         if (success) {
-            Item item = itemService.getItemById(itemId);
+            Item item = itemService.getItemById(id);
             if (item != null) {
                 logService.logUserOperation("REDUCE_STOCK", item.getSellerId(), 
-                    String.format("减少商品库存，商品ID: %d, 数量: %d", itemId, quantity));
+                    String.format("减少商品库存，商品ID: %d, 数量: %d", id, quantity));
             }
+            return ResponseEntity.ok(new ApiResponse(true, "库存减少成功"));
         }
-        return success;
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "库存减少失败"));
+    }
+    
+    // 请求DTO类
+    public static class PublishItemRequest {
+        private String name;
+        private String description;
+        private Double price;
+        private Long sellerId;
+        private Integer stock;
+        
+        // getters and setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public Double getPrice() { return price; }
+        public void setPrice(Double price) { this.price = price; }
+        public Long getSellerId() { return sellerId; }
+        public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
+        public Integer getStock() { return stock; }
+        public void setStock(Integer stock) { this.stock = stock; }
+    }
+
+    public static class UpdateItemRequest {
+        private String name;
+        private String description;
+        private Double price;
+        private Integer stock;
+        
+        // getters and setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public Double getPrice() { return price; }
+        public void setPrice(Double price) { this.price = price; }
+        public Integer getStock() { return stock; }
+        public void setStock(Integer stock) { this.stock = stock; }
+    }
+
+    public static class ApiResponse {
+        private boolean success;
+        private String message;
+        
+        public ApiResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+        
+        // getters and setters
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
     }
 }

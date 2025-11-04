@@ -1,19 +1,39 @@
 package com.OpenOtkPlatform.domain;
 
+import jakarta.persistence.*;
 import java.util.Date;
 
-/**
- * 商品实体类
- */
+@Entity
+@Table(name = "items")
 public class Item {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false, length = 100)
     private String name;
+    
+    @Column(columnDefinition = "TEXT")
     private String description;
+    
+    @Column(nullable = false, columnDefinition = "DECIMAL(10,2)")
     private Double price;
+    
+    @Column(name = "seller_id", nullable = false)
     private Long sellerId;
+    
+    @Column(nullable = false)
     private Integer stock;
+    
+    @Column(nullable = false)
     private Boolean available;
+    
+    @Column(name = "create_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date createTime;
+    
+    @Column(name = "update_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date updateTime;
     
     public Item() {

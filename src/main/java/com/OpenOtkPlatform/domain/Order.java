@@ -1,18 +1,36 @@
 package com.OpenOtkPlatform.domain;
 
+import jakarta.persistence.*;
 import java.util.Date;
 
-/**
- * 订单实体类
- */
+@Entity
+@Table(name = "orders")
 public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "item_id", nullable = false)
     private Long itemId;
+    
+    @Column(name = "buyer_id", nullable = false)
     private Long buyerId;
+    
+    @Column(name = "seller_id", nullable = false)
     private Long sellerId;
+    
+    @Column(name = "total_price", nullable = false, columnDefinition = "DECIMAL(10,2)")
     private Double totalPrice;
+    
+    @Column(nullable = false, length = 20)
     private String status;
+    
+    @Column(name = "create_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date createTime;
+    
+    @Column(name = "update_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date updateTime;
     
     public static final String STATUS_PENDING = "PENDING";

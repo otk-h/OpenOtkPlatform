@@ -1,28 +1,19 @@
 package com.OpenOtkPlatform.service;
 
 import com.OpenOtkPlatform.domain.Item;
-import com.OpenOtkPlatform.persistence.ItemDAO;
+import com.OpenOtkPlatform.repository.ItemRepository;
 import com.OpenOtkPlatform.util.ValidationUtil;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-/**
- * 商品服务类 - 单例模式
- */
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class ItemService {
-    private static ItemService instance;
-    private ItemDAO itemDAO;
     
-    private ItemService() {
-        this.itemDAO = new ItemDAO();
-    }
-    
-    public static ItemService getInstance() {
-        if (instance == null) {
-            instance = new ItemService();
-        }
-        return instance;
-    }
+    @Autowired
+    private ItemRepository itemRepository;
     
     public boolean publishItem(String name, String description, Double price, Long sellerId, Integer stock) {
         if (name == null || name.trim().isEmpty()
@@ -39,54 +30,61 @@ public class ItemService {
         }
         
         Item newItem = new Item(name, description, price, sellerId, stock);
-        return itemDAO.insertItem(newItem);
+        try {
+            itemRepository.save(newItem);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public Item getItemById(Long itemId) {
         if (itemId == null || itemId <= 0) {
             return null;
         }
-        return itemDAO.getItemById(itemId);
+        return itemRepository.findById(itemId).orElse(null);
     }
     
     public List<Item> getAllItems() {
-        return itemDAO.getAllItems();
+        return itemRepository.findByAvailableTrue();
     }
     
     public List<Item> getItemsBySeller(Long sellerId) {
         if (sellerId == null || sellerId <= 0) {
             return null;
         }
-        return itemDAO.getItemsBySeller(sellerId);
+        return itemRepository.findBySellerId(sellerId);
     }
     
     public List<Item> searchItems(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllItems();
         }
-        
-        String searchTerm = keyword.toLowerCase().trim();
-        List<Item> allItems = getAllItems();
-        
-        return allItems.stream()
-                .filter(item -> 
-                    item.getName().toLowerCase().contains(searchTerm) ||
-                    item.getDescription().toLowerCase().contains(searchTerm))
-                .collect(Collectors.toList());
+        return itemRepository.searchItems(keyword);
     }
     
     public boolean updateItem(Item item) {
         if (item == null || item.getId() == null) {
             return false;
         }
-        return itemDAO.updateItem(item);
+        try {
+            itemRepository.save(item);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean deleteItem(Long itemId) {
         if (itemId == null || itemId <= 0) {
             return false;
         }
-        return itemDAO.deleteItem(itemId);
+        try {
+            itemRepository.deleteById(itemId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean reduceStock(Long itemId, Integer quantity) {
@@ -94,13 +92,19 @@ public class ItemService {
             return false;
         }
         
-        Item item = itemDAO.getItemById(itemId);
-        if (item == null || !item.isInStock() || item.getStock() < quantity) {
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        if (!itemOpt.isPresent() || !itemOpt.get().isInStock() || itemOpt.get().getStock() < quantity) {
             return false;
         }
         
+        Item item = itemOpt.get();
         if (item.reduceStock(quantity)) {
-            return itemDAO.updateItemStock(itemId, item.getStock());
+            try {
+                itemRepository.save(item);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
         }
         return false;
     }
@@ -110,13 +114,19 @@ public class ItemService {
             return false;
         }
         
-        Item item = itemDAO.getItemById(itemId);
-        if (item == null) {
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        if (!itemOpt.isPresent()) {
             return false;
         }
         
+        Item item = itemOpt.get();
         item.increaseStock(quantity);
-        return itemDAO.updateItemStock(itemId, item.getStock());
+        try {
+            itemRepository.save(item);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public boolean isItemAvailable(Long itemId) {
@@ -124,7 +134,7 @@ public class ItemService {
             return false;
         }
         
-        Item item = itemDAO.getItemById(itemId);
-        return item != null && item.isInStock();
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        return itemOpt.isPresent() && itemOpt.get().isInStock();
     }
 }

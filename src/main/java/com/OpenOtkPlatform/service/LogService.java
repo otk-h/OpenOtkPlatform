@@ -1,29 +1,20 @@
 package com.OpenOtkPlatform.service;
 
 import com.OpenOtkPlatform.domain.SystemLog;
-import com.OpenOtkPlatform.persistence.LogDAO;
+import com.OpenOtkPlatform.repository.SystemLogRepository;
 import com.OpenOtkPlatform.util.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
-/**
- * 日志服务类 - 单例模式 + 观察者模式
- */
+@Service
 public class LogService {
-    private static LogService instance;
-    private LogDAO logDAO;
-    private Logger logger;
     
-    private LogService() {
-        this.logDAO = new LogDAO();
-        this.logger = Logger.getInstance();
-    }
+    @Autowired
+    private SystemLogRepository systemLogRepository;
     
-    public static LogService getInstance() {
-        if (instance == null) {
-            instance = new LogService();
-        }
-        return instance;
-    }
+    private Logger logger = Logger.getInstance();
     
     public void logUserOperation(String operationType, Long userId, String description) {
         if (operationType == null || operationType.trim().isEmpty() || 
@@ -33,7 +24,7 @@ public class LogService {
         }
         
         SystemLog log = new SystemLog(operationType, userId, description);
-        logDAO.insertLog(log);
+        systemLogRepository.save(log);
         
         logger.info(String.format("用户操作日志: [%s] 用户ID: %d, 描述: %s", 
             operationType, userId, description));
@@ -46,7 +37,7 @@ public class LogService {
         }
         
         SystemLog log = new SystemLog(operationType, null, description);
-        logDAO.insertLog(log);
+        systemLogRepository.save(log);
         
         logger.info(String.format("系统事件日志: [%s] 描述: %s", operationType, description));
     }
@@ -73,24 +64,29 @@ public class LogService {
         if (userId == null || userId <= 0) {
             return null;
         }
-        return logDAO.getLogsByUser(userId);
+        return systemLogRepository.findByUserId(userId);
     }
     
     public List<SystemLog> getLogsByOperationType(String operationType) {
         if (operationType == null || operationType.trim().isEmpty()) {
             return null;
         }
-        return logDAO.getLogsByOperationType(operationType);
+        return systemLogRepository.findByOperationType(operationType);
     }
     
     public List<SystemLog> getAllLogs() {
-        return logDAO.getAllLogs();
+        return systemLogRepository.findAll();
     }
     
     public boolean deleteLog(Long logId) {
         if (logId == null || logId <= 0) {
             return false;
         }
-        return logDAO.deleteLog(logId);
+        try {
+            systemLogRepository.deleteById(logId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
