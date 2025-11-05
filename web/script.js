@@ -1,6 +1,3 @@
-// OpenOtkPlatform 网页功能脚本
-
-// API基础URL
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // 用户管理
