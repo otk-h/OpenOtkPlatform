@@ -1,12 +1,12 @@
 package com.OpenOtkPlatform.api;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import com.OpenOtkPlatform.domain.User;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.util.ValidationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -26,8 +26,7 @@ public class UserController {
         
         User user = userService.getUserById(id);
         if (user != null) {
-            // 记录查询用户信息日志
-            logService.logUserOperation("GET_USER_INFO", id, "查询用户信息");
+            logService.logGetUserInfo(id);
             return ResponseEntity.ok(user);
         }
         return ResponseEntity.notFound().build();
@@ -62,8 +61,7 @@ public class UserController {
         boolean success = userService.updateUser(user);
         
         if (success) {
-            logService.logUserOperation("UPDATE_USER_INFO", id, 
-                String.format("更新用户信息，邮箱: %s, 电话: %s", email, phone));
+            logService.logUserUpdate(id, email, phone);
             return ResponseEntity.ok(new ApiResponse(true, "用户信息更新成功"));
         }
         
@@ -80,8 +78,7 @@ public class UserController {
         
         boolean success = userService.rechargeBalance(id, amount);
         if (success) {
-            logService.logUserOperation("RECHARGE_BALANCE", id, 
-                String.format("用户充值，金额: %.2f", amount));
+            logService.logRecharge(id, amount);
             return ResponseEntity.ok(new ApiResponse(true, "充值成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "充值失败"));
@@ -95,7 +92,7 @@ public class UserController {
         
         User user = userService.getUserById(id);
         if (user != null) {
-            logService.logUserOperation("GET_BALANCE", id, "查询用户余额");
+            logService.logGetBalance(id);
             return ResponseEntity.ok(new BalanceResponse(user.getBalance()));
         }
         return ResponseEntity.notFound().build();
@@ -109,7 +106,7 @@ public class UserController {
         
         boolean success = userService.deleteUser(id);
         if (success) {
-            logService.logUserOperation("DELETE_USER", id, "删除用户账号");
+            logService.logUserDelete(id);
             return ResponseEntity.ok(new ApiResponse(true, "用户删除成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "用户删除失败"));

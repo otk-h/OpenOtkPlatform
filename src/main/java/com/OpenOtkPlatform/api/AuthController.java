@@ -1,13 +1,14 @@
 package com.OpenOtkPlatform.api;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import com.OpenOtkPlatform.domain.User;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.util.PasswordUtil;
-import com.OpenOtkPlatform.util.ValidationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.OpenOtkPlatform.util.ValidationUtil;;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -70,7 +71,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
         }
         
-        logService.logUserOperation("LOGOUT", userId, "用户登出系统");
+        logService.logLogout(userId);
         return ResponseEntity.ok(new ApiResponse(true, "登出成功"));
     }
     
@@ -84,8 +85,8 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse(user != null, user != null ? "会话有效" : "会话无效"));
     }
     
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         Long userId = request.getUserId();
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
@@ -117,38 +118,11 @@ public class AuthController {
         boolean success = userService.updateUser(user);
         
         if (success) {
-            logService.logUserOperation("CHANGE_PASSWORD", userId, "用户修改密码");
+            logService.logResetPassword(userId, oldPassword, newPassword);
             return ResponseEntity.ok(new ApiResponse(true, "密码修改成功"));
         }
         
         return ResponseEntity.badRequest().body(new ApiResponse(false, "密码修改失败"));
-    }
-    
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String email) {
-        if (email == null || email.trim().isEmpty() || !ValidationUtil.isValidEmail(email)) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "邮箱格式无效"));
-        }
-        
-        User user = userService.getUserByUsername(email); // 假设邮箱作为用户名
-        if (user == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "用户不存在"));
-        }
-        
-        // 生成随机密码
-        String newPassword = PasswordUtil.generateRandomPassword();
-        user.setPassword(PasswordUtil.encryptPassword(newPassword));
-        boolean success = userService.updateUser(user);
-        
-        if (success) {
-            // 这里应该发送邮件给用户，包含新密码
-            // 为了简化，这里只记录日志
-            logService.logUserOperation("RESET_PASSWORD", user.getId(), 
-                String.format("用户重置密码，新密码: %s", newPassword));
-            return ResponseEntity.ok(new ApiResponse(true, "密码重置成功，请查收邮件"));
-        }
-        
-        return ResponseEntity.badRequest().body(new ApiResponse(false, "密码重置失败"));
     }
     
     // 请求和响应DTO类
@@ -180,7 +154,7 @@ public class AuthController {
         public void setPassword(String password) { this.password = password; }
     }
 
-    public static class ChangePasswordRequest {
+    public static class ResetPasswordRequest {
         private Long userId;
         private String oldPassword;
         private String newPassword;

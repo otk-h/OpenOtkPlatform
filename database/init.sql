@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     phone VARCHAR(20) NOT NULL,
-    balance DECIMAL(10,2) DEFAULT 0.00,
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    balance DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_username (username),
     INDEX idx_email (email)
 );
@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS items (
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     seller_id BIGINT NOT NULL,
-    stock INT DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'AVAILABLE',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    stock INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_seller_id (seller_id),
     INDEX idx_status (status),
     INDEX idx_name (name),
@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS orders (
     buyer_id BIGINT NOT NULL,
     seller_id BIGINT NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'PENDING',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_buyer_id (buyer_id),
     INDEX idx_seller_id (seller_id),
     INDEX idx_status (status),
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS system_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     operation_type VARCHAR(50) NOT NULL,
     user_id BIGINT,
-    description TEXT NOT NULL,
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    description TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_id (user_id),
     INDEX idx_operation_type (operation_type),
     INDEX idx_create_time (create_time),
@@ -70,33 +70,31 @@ CREATE TABLE IF NOT EXISTS system_logs (
 
 -- 插入测试用户
 INSERT INTO users (username, password, email, phone, balance) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'admin@opentk.com', '13800138000', 1000.00),
-('buyer1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'buyer1@opentk.com', '13800138001', 500.00),
-('seller1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'seller1@opentk.com', '13800138002', 200.00),
-('seller2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'seller2@opentk.com', '13800138003', 300.00);
+('admin', 'admin.password', 'admin@example.com', '01234567890', 1000.00),
+('user1', 'user1.password', 'user1@example.com', '01234567890', 500.00),
+('user2', 'user2.password', 'user2@example.com', '01234567890', 200.00);
 
 -- 插入测试商品
 INSERT INTO items (name, description, price, seller_id, stock) VALUES
-('iPhone 15 Pro', '最新款苹果手机，A17 Pro芯片，钛金属机身', 7999.00, 3, 10),
-('MacBook Air M2', '13.6英寸MacBook Air，M2芯片，8核CPU', 8999.00, 3, 5),
-('AirPods Pro 2', '主动降噪无线耳机，空间音频', 1899.00, 4, 20),
-('iPad Air 5', '10.9英寸iPad Air，M1芯片，支持Apple Pencil', 4399.00, 4, 8),
-('Apple Watch Series 9', '45mm GPS版，全天候视网膜显示屏', 2999.00, 3, 15);
+('example item 1', 'example desciption 1', 7999.00, 3, 10),
+('example item 2', 'example desciption 2', 8999.00, 3, 5),
+('example item 3', 'example desciption 3', 7999.00, 3, 10),
+('example item 4', 'example desciption 4', 8999.00, 3, 5);
 
 -- 插入测试订单
 INSERT INTO orders (item_id, buyer_id, seller_id, total_price, status) VALUES
 (1, 2, 3, 7999.00, 'COMPLETED'),
-(3, 2, 4, 1899.00, 'CONFIRMED'),
-(5, 2, 3, 2999.00, 'PENDING');
+(3, 2, 3, 1899.00, 'CONFIRMED'),
+(4, 2, 3, 2999.00, 'PENDING');
 
 -- 插入系统日志示例
 INSERT INTO system_logs (operation_type, user_id, description) VALUES
-('REGISTER', 1, '用户注册账号'),
-('LOGIN', 1, '用户登录系统'),
-('PUBLISH_ITEM', 3, '用户发布商品，商品ID: 1'),
-('PUBLISH_ITEM', 4, '用户发布商品，商品ID: 3'),
-('CREATE_ORDER', 2, '用户创建订单，订单ID: 1'),
-('COMPLETE_ORDER', 2, '用户完成订单，订单ID: 1');
+('REGISTER', 1, 'User registered account'),
+('LOGIN', 1, 'User logged in'),
+('PUBLISH_ITEM', 3, 'User published item, Item ID: 1'),
+('PUBLISH_ITEM', 3, 'User published item, Item ID: 3'),
+('CREATE_ORDER', 2, 'User created order, Order ID: 1'),
+('COMPLETE_ORDER', 2, 'User completed order, Order ID: 1');
 
 -- 创建视图：用户订单统计
 CREATE VIEW user_order_stats AS

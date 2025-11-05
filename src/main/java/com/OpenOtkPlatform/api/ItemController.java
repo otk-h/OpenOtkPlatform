@@ -1,13 +1,14 @@
 package com.OpenOtkPlatform.api;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import com.OpenOtkPlatform.domain.Item;
 import com.OpenOtkPlatform.service.ItemService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.util.ValidationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 
@@ -134,8 +135,7 @@ public class ItemController {
         
         boolean success = itemService.updateItem(item);
         if (success) {
-            logService.logUserOperation("UPDATE_ITEM", item.getSellerId(), 
-                String.format("更新商品信息，商品ID: %d", id));
+            logService.logItemUpdate(null, id);
             return ResponseEntity.ok(new ApiResponse(true, "商品更新成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "商品更新失败"));
@@ -154,8 +154,7 @@ public class ItemController {
         
         boolean success = itemService.deleteItem(id);
         if (success) {
-            logService.logUserOperation("DELETE_ITEM", item.getSellerId(), 
-                String.format("删除商品，商品ID: %d", id));
+            logService.logItemDelete(item.getSellerId(), id);
             return ResponseEntity.ok(new ApiResponse(true, "商品删除成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "商品删除失败"));
@@ -171,8 +170,7 @@ public class ItemController {
         if (success) {
             Item item = itemService.getItemById(id);
             if (item != null) {
-                logService.logUserOperation("REDUCE_STOCK", item.getSellerId(), 
-                    String.format("减少商品库存，商品ID: %d, 数量: %d", id, quantity));
+                logService.logReduceStock(item.getSellerId(), id, quantity); 
             }
             return ResponseEntity.ok(new ApiResponse(true, "库存减少成功"));
         }

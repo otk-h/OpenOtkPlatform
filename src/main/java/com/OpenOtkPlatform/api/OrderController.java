@@ -1,13 +1,13 @@
 package com.OpenOtkPlatform.api;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import com.OpenOtkPlatform.domain.Order;
 import com.OpenOtkPlatform.service.OrderService;
 import com.OpenOtkPlatform.service.LogService;
 import com.OpenOtkPlatform.service.UserService;
 import com.OpenOtkPlatform.service.ItemService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -53,7 +53,6 @@ public class OrderController {
             // 扣减买家余额
             userService.deductBalance(buyerId, totalPrice);
             
-            // 记录订单创建日志
             logService.logOrderCreate(buyerId, order.getId());
             
             return ResponseEntity.ok(order);
@@ -104,8 +103,7 @@ public class OrderController {
         if (success) {
             Order order = orderService.getOrderById(id);
             if (order != null) {
-                logService.logUserOperation("UPDATE_ORDER_STATUS", order.getBuyerId(), 
-                    String.format("更新订单状态，订单ID: %d, 状态: %s", id, status));
+                logService.logOrderUpdate(order.getBuyerId(), id, status);
             }
             return ResponseEntity.ok(new ApiResponse(true, "订单状态更新成功"));
         }
@@ -128,8 +126,7 @@ public class OrderController {
             // 恢复买家余额
             userService.rechargeBalance(order.getBuyerId(), order.getTotalPrice());
             
-            logService.logUserOperation("CANCEL_ORDER", order.getBuyerId(), 
-                String.format("取消订单，订单ID: %d", id));
+            logService.logOrderCancel(order.getBuyerId(), id);
             return ResponseEntity.ok(new ApiResponse(true, "订单取消成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "订单取消失败"));
@@ -151,8 +148,7 @@ public class OrderController {
             // 将款项转给卖家
             userService.rechargeBalance(order.getSellerId(), order.getTotalPrice());
             
-            logService.logUserOperation("COMPLETE_ORDER", order.getBuyerId(), 
-                String.format("完成订单，订单ID: %d", id));
+            logService.logOrderComplete(order.getBuyerId(), id);
             return ResponseEntity.ok(new ApiResponse(true, "订单完成成功"));
         }
         return ResponseEntity.badRequest().body(new ApiResponse(false, "订单完成失败"));
@@ -168,8 +164,7 @@ public class OrderController {
         if (contactInfo != null) {
             Order order = orderService.getOrderById(id);
             if (order != null) {
-                logService.logUserOperation("EXCHANGE_CONTACT", order.getBuyerId(), 
-                    String.format("交换联系方式，订单ID: %d", id));
+                logService.logExchangeInfo(order.getBuyerId(), order.getSellerId());
             }
             return ResponseEntity.ok(new ApiResponse(true, contactInfo));
         }

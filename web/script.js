@@ -14,11 +14,19 @@ async function apiRequest(url, options = {}) {
             ...options
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        // 检查响应是否包含success字段
+        if (data.success !== undefined) {
+            if (!data.success) {
+                throw new Error(data.message || '请求失败');
+            }
+            // 如果成功且有数据，返回数据；否则返回整个响应
+            return data.data !== undefined ? data.data : data;
         }
         
-        return await response.json();
+        // 如果没有success字段，直接返回数据
+        return data;
     } catch (error) {
         console.error('API请求失败:', error);
         throw error;
@@ -65,12 +73,12 @@ function createProductCard(product) {
     
     card.innerHTML = `
         <div class="product-image">
-            <img src="${product.image}" alt="${product.name}">
+            <img src="https://via.placeholder.com/200x150/24292e/ffffff?text=${encodeURIComponent(product.name)}" alt="${product.name}">
         </div>
         <h3 class="product-name">${product.name}</h3>
         <p class="product-description">${product.description}</p>
         <div class="product-price">¥${product.price.toFixed(2)}</div>
-        <div class="product-seller">卖家: ${product.seller}</div>
+        <div class="product-seller">卖家ID: ${product.sellerId}</div>
         <button class="btn btn-primary" onclick="event.stopPropagation(); viewProductDetail(${product.id})">查看详情</button>
     `;
     
@@ -211,6 +219,7 @@ async function handleLogin(event) {
             body: JSON.stringify({ username, password })
         });
         
+        // 根据后端AuthController的LoginResponse格式处理
         if (response.success) {
             currentUser = response.user;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -221,7 +230,7 @@ async function handleLogin(event) {
             alert(response.message || '登录失败');
         }
     } catch (error) {
-        alert('登录失败，请检查网络连接');
+        alert('登录失败: ' + error.message);
         console.error('登录失败:', error);
     }
 }
@@ -252,7 +261,7 @@ async function handleRegister(event) {
             alert(response.message || '注册失败');
         }
     } catch (error) {
-        alert('注册失败，请稍后重试');
+        alert('注册失败: ' + error.message);
         console.error('注册失败:', error);
     }
 }
@@ -311,6 +320,185 @@ function checkLoginStatus() {
             document.getElementById('profileEmail').textContent = currentUser.email;
             document.getElementById('profilePhone').textContent = currentUser.phone;
             document.getElementById('profileBalance').textContent = currentUser.balance.toFixed(2);
+        }
+    } else {
+        // 用户未登录
+        userInfoElements.forEach(element => {
+            element.style.display = 'none';
+        });
+        
+        loginLinks.forEach(link => {
+            link.textContent = '登录/注册';
+        });
+        
+        // 更新用户中心页面
+        if (userProfile && loginForm && registerForm) {
+            userProfile.style.display = 'none';
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        }
+    }
+}
+
+// 余额充值功能
+async function rechargeBalance() {
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    const amountInput = document.getElementById('rechargeAmount');
+    const amount = parseFloat(amountInput.value);
+    
+    if (!amount || amount <= 0) {
+        alert('请输入有效的充值金额');
+        return;
+    }
+    
+    try {
+        const response = await apiRequest(`/users/${currentUser.id}/recharge?amount=${amount}`, {
+            method: 'POST'
+        });
+        
+        if (response.success) {
+            alert('充值成功！');
+            amountInput.value = '';
+            // 刷新用户信息
+            await refreshUserInfo();
+        } else {
+            alert(response.message || '充值失败');
+        }
+    } catch (error) {
+        alert('充值失败: ' + error.message);
+        console.error('充值失败:', error);
+    }
+}
+
+// 刷新用户信息
+async function refreshUserInfo() {
+    if (!currentUser) return;
+    
+    try {
+        const user = await apiRequest(`/users/${currentUser.id}`);
+        if (user) {
+            currentUser = user;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            checkLoginStatus();
+        }
+    } catch (error) {
+        console.error('刷新用户信息失败:', error);
+    }
+}
+
+// 加载用户订单
+async function loadUserOrders() {
+    if (!currentUser) return;
+    
+    const ordersList = document.getElementById('ordersList');
+    if (!ordersList) return;
+    
+    try {
+        const orders = await apiRequest(`/orders/buyer/${currentUser.id}`);
+        ordersList.innerHTML = '';
+        
+        if (orders.length === 0) {
+            ordersList.innerHTML = '<p style="text-align: center; color: #586069;">暂无订单</p>';
+            return;
+        }
+        
+        orders.forEach(order => {
+            const orderElement = createOrderElement(order);
+            ordersList.appendChild(orderElement);
+        });
+    } catch (error) {
+        ordersList.innerHTML = '<p style="text-align: center; color: #ff6b6b;">加载订单失败</p>';
+        console.error('加载订单失败:', error);
+    }
+}
+
+// 创建订单元素
+function createOrderElement(order) {
+    const orderDiv = document.createElement('div');
+    orderDiv.className = 'order-item';
+    orderDiv.style.border = '1px solid #e1e4e8';
+    orderDiv.style.borderRadius = '6px';
+    orderDiv.style.padding = '16px';
+    orderDiv.style.marginBottom = '12px';
+    orderDiv.style.backgroundColor = '#f6f8fa';
+    
+    orderDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
+                <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
+                <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
+                <p style="margin: 4px 0;">
+                    <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
+                        ${order.status}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <p style="margin: 4px 0; color: #586069; font-size: 12px;">
+                    ${new Date(order.createTime).toLocaleString()}
+                </p>
+            </div>
+        </div>
+    `;
+    
+    return orderDiv;
+}
+
+// 获取订单状态颜色
+function getStatusColor(status) {
+    const colors = {
+        'PENDING': '#0366d6',
+        'CONFIRMED': '#28a745',
+        'COMPLETED': '#6f42c1',
+        'CANCELLED': '#d73a49'
+    };
+    return colors[status] || '#6a737d';
+}
+
+// 更新检查登录状态函数，添加订单加载
+function checkLoginStatus() {
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+    }
+    
+    // 更新导航栏用户信息
+    const userInfoElements = document.querySelectorAll('#userInfo');
+    const loginLinks = document.querySelectorAll('.nav-link[href="user.html"]');
+    const userProfile = document.getElementById('userProfile');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    if (currentUser) {
+        // 更新导航栏
+        userInfoElements.forEach(element => {
+            element.textContent = `欢迎, ${currentUser.username}`;
+            element.style.display = 'inline';
+        });
+        
+        loginLinks.forEach(link => {
+            link.textContent = '用户中心';
+        });
+        
+        // 更新用户中心页面
+        if (userProfile && loginForm && registerForm) {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'none';
+            userProfile.style.display = 'block';
+            
+            document.getElementById('profileUsername').textContent = currentUser.username;
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profilePhone').textContent = currentUser.phone;
+            document.getElementById('profileBalance').textContent = currentUser.balance.toFixed(2);
+            
+            // 加载用户订单
+            loadUserOrders();
         }
     } else {
         // 用户未登录
