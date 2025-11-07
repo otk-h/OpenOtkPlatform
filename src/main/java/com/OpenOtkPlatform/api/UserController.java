@@ -21,96 +21,96 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserInfo(@PathVariable Long id) {
         if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "inValid userId"));
         }
         
         User user = userService.getUserById(id);
         if (user != null) {
-            logService.logGetUserInfo(id);
+            // TODO - finish me
+            // logService.logGetUserInfo(id);
             return ResponseEntity.ok(user);
         }
         return ResponseEntity.notFound().build();
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUserInfo(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
-        String email = request.getEmail();
-        String phone = request.getPhone();
+    // @PutMapping("/{id}")
+    // public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
+    //     String email = request.getEmail();
+    //     String phone = request.getPhone();
         
-        if (id == null || id <= 0
-            || email == null || email.trim().isEmpty()
-            || phone == null || phone.trim().isEmpty()
-            || !ValidationUtil.isValidEmail(email)
-            || !ValidationUtil.isValidPhone(phone)
-        ) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
-        }
+    //     if (id == null || id <= 0
+    //         || email == null || email.trim().isEmpty()
+    //         || phone == null || phone.trim().isEmpty()
+    //         || !ValidationUtil.isValidEmail(email)
+    //         || !ValidationUtil.isValidPhone(phone)
+    //     ) {
+    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "inValid arg"));
+    //     }
         
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    //     User user = userService.getUserById(id);
+    //     if (user == null) {
+    //         return ResponseEntity.notFound().build();
+    //     }
         
-        // 检查邮箱是否已被其他用户使用
-        if (!user.getEmail().equals(email) && userService.isEmailExists(email)) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "邮箱已被使用"));
-        }
+    //     if (!user.getEmail().equals(email) && userService.isEmailExists(email)) {
+    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "Email Already in use"));
+    //     }
         
-        user.setEmail(email);
-        user.setPhone(phone);
-        boolean success = userService.updateUser(user);
+    //     user.setEmail(email);
+    //     user.setPhone(phone);
+    //     boolean success = userService.updateUser(user);
         
-        if (success) {
-            logService.logUserUpdate(id, email, phone);
-            return ResponseEntity.ok(new ApiResponse(true, "用户信息更新成功"));
-        }
+    //     if (success) {
+    //         logService.logUserUpdate(id, email, phone);
+    //         return ResponseEntity.ok(new ApiResponse(true, "用户信息更新成功"));
+    //     }
         
-        return ResponseEntity.badRequest().body(new ApiResponse(false, "用户信息更新失败"));
-    }
+    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "用户信息更新失败"));
+    // }
     
-    @PostMapping("/{id}/recharge")
-    public ResponseEntity<?> rechargeBalance(@PathVariable Long id, @RequestParam Double amount) {
-        if (id == null || id <= 0
-            || amount == null || amount <= 0
-        ) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
-        }
+    // @PostMapping("/{id}/recharge")
+    // public ResponseEntity<?> rechargeBalance(@PathVariable Long id, @RequestParam Double amount) {
+    //     if (id == null || id <= 0
+    //         || amount == null || amount <= 0
+    //     ) {
+    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "参数无效"));
+    //     }
         
-        boolean success = userService.rechargeBalance(id, amount);
-        if (success) {
-            logService.logRecharge(id, amount);
-            return ResponseEntity.ok(new ApiResponse(true, "充值成功"));
-        }
-        return ResponseEntity.badRequest().body(new ApiResponse(false, "充值失败"));
-    }
+    //     boolean success = userService.rechargeBalance(id, amount);
+    //     if (success) {
+    //         logService.logRecharge(id, amount);
+    //         return ResponseEntity.ok(new ApiResponse(true, "充值成功"));
+    //     }
+    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "充值失败"));
+    // }
     
-    @GetMapping("/{id}/balance")
-    public ResponseEntity<?> getUserBalance(@PathVariable Long id) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
-        }
+    // @GetMapping("/{id}/balance")
+    // public ResponseEntity<?> getUserBalance(@PathVariable Long id) {
+    //     if (id == null || id <= 0) {
+    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
+    //     }
         
-        User user = userService.getUserById(id);
-        if (user != null) {
-            logService.logGetBalance(id);
-            return ResponseEntity.ok(new BalanceResponse(user.getBalance()));
-        }
-        return ResponseEntity.notFound().build();
-    }
+    //     User user = userService.getUserById(id);
+    //     if (user != null) {
+    //         logService.logGetBalance(id);
+    //         return ResponseEntity.ok(new BalanceResponse(user.getBalance()));
+    //     }
+    //     return ResponseEntity.notFound().build();
+    // }
     
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
-        }
+    // @DeleteMapping("/{id}")
+    // public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    //     if (id == null || id <= 0) {
+    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "用户ID无效"));
+    //     }
         
-        boolean success = userService.deleteUser(id);
-        if (success) {
-            logService.logUserDelete(id);
-            return ResponseEntity.ok(new ApiResponse(true, "用户删除成功"));
-        }
-        return ResponseEntity.badRequest().body(new ApiResponse(false, "用户删除失败"));
-    }
+    //     boolean success = userService.deleteUser(id);
+    //     if (success) {
+    //         logService.logUserDelete(id);
+    //         return ResponseEntity.ok(new ApiResponse(true, "用户删除成功"));
+    //     }
+    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "用户删除失败"));
+    // }
     
     // 请求DTO类
     public static class UpdateUserRequest {

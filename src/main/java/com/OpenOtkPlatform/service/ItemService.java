@@ -21,7 +21,11 @@ public class ItemService {
             || price == null || price <= 0
             || sellerId == null || sellerId <= 0
             || stock == null || stock < 0
-            || !ValidationUtil.isValidItemName(name)
+        ) {
+            return false;
+        }
+
+        if (!ValidationUtil.isValidItemName(name)
             || !ValidationUtil.isValidItemDescription(description)
             || !ValidationUtil.isValidPrice(price)
             || !ValidationUtil.isValidStock(stock)

@@ -7,9 +7,7 @@ import java.util.regex.Pattern;
  */
 public class ValidationUtil {
     
-    private ValidationUtil() {
-        // 工具类，防止实例化
-    }
+    private ValidationUtil() { }
     
     // 正则表达式模式
     private static final Pattern EMAIL_PATTERN = 
@@ -51,14 +49,18 @@ public class ValidationUtil {
         if (price == null) {
             return false;
         }
-        return price >= 0 && price <= 1000000; // 价格范围：0到100万
+        // TODO - finish me
+        // [0, 10000000]
+        return price >= 0 && price <= 1000000;
     }
     
     public static boolean isValidStock(Integer stock) {
         if (stock == null) {
             return false;
         }
-        return stock >= 0 && stock <= 10000; // 库存范围：0到1万
+        // TODO - finish me
+        // [0, 10000]
+        return stock >= 0 && stock <= 10000;
     }
     
     public static boolean isValidItemName(String name) {
@@ -73,7 +75,9 @@ public class ValidationUtil {
         if (description == null) {
             return false;
         }
-        return description.length() <= 1000; // 描述最大长度1000字符
+        // TODO - finish me
+        // [0, 1000]
+        return description.length() <= 1000;
     }
     
     public static boolean isPositiveInteger(Integer number) {
@@ -93,9 +97,7 @@ public class ValidationUtil {
     }
     
     public static boolean isStringLengthValid(String str, int minLength, int maxLength) {
-        if (str == null) {
-            return false;
-        }
+        if (str == null) { return false; }
         int length = str.trim().length();
         return length >= minLength && length <= maxLength;
     }

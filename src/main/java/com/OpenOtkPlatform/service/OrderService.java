@@ -20,15 +20,15 @@ public class OrderService {
     @Autowired
     private UserService userService;
     
-    public Order createOrder(Long itemId, Long buyerId, Long sellerId, Double totalPrice) {
-        if (!validateOrderCreation(itemId, buyerId, sellerId)) {
+    public Order createOrder(Long itemId, Long buyerId, Long sellerId, Long quantity, Double totalPrice) {
+        if (!validateOrderCreation(itemId, buyerId, sellerId, quantity)) {
             return null;
         }
         
-        Order newOrder = new Order(itemId, buyerId, sellerId, totalPrice);
+        Order newOrder = new Order(itemId, buyerId, sellerId, quantity, totalPrice);
         try {
             Order savedOrder = orderRepository.save(newOrder);
-            itemService.reduceStock(itemId, 1);
+            itemService.reduceStock(itemId, quantity.intValue());
             return savedOrder;
         } catch (Exception e) {
             return null;
@@ -87,7 +87,7 @@ public class OrderService {
         }
         
         Order order = orderOpt.get();
-        itemService.increaseStock(order.getItemId(), 1);
+        itemService.increaseStock(order.getItemId(), order.getQuantity().intValue());
         try {
             orderRepository.save(order);
             return true;
@@ -132,10 +132,12 @@ public class OrderService {
         return String.format("买家联系方式: %s, 卖家联系方式: %s", buyerContact, sellerContact);
     }
     
-    public boolean validateOrderCreation(Long itemId, Long buyerId, Long sellerId) {
-        if (itemId == null || itemId <= 0 || 
-            buyerId == null || buyerId <= 0 || 
-            sellerId == null || sellerId <= 0) {
+    public boolean validateOrderCreation(Long itemId, Long buyerId, Long sellerId, Long quantity) {
+        if (itemId == null || itemId <= 0
+            || buyerId == null || buyerId <= 0
+            || sellerId == null || sellerId <= 0
+            || quantity == null || quantity <= 0
+        ) {
             return false;
         }
         

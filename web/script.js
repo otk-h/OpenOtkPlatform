@@ -146,10 +146,35 @@ async function loadProductDetail() {
         document.getElementById('productStock').textContent = `库存: ${product.stock}`;
         document.getElementById('productSeller').textContent = `卖家ID: ${product.sellerId}`;
         document.getElementById('productImage').src = `https://via.placeholder.com/400x300/24292e/ffffff?text=${encodeURIComponent(product.name)}`;
+        
+        // 设置数量输入框的最大值
+        const quantityInput = document.getElementById('quantityInput');
+        if (quantityInput) {
+            quantityInput.max = product.stock;
+            quantityInput.value = 1;
+            updateTotalPricePreview(product.price, 1);
+        }
+        
+        // 添加数量变化监听器
+        if (quantityInput) {
+            quantityInput.addEventListener('input', function() {
+                const quantity = parseInt(this.value) || 1;
+                updateTotalPricePreview(product.price, quantity);
+            });
+        }
     } catch (error) {
         alert('商品不存在或加载失败');
         window.location.href = 'index.html';
         console.error('加载商品详情失败:', error);
+    }
+}
+
+// 更新总价预览
+function updateTotalPricePreview(price, quantity) {
+    const totalPricePreview = document.getElementById('totalPricePreview');
+    if (totalPricePreview) {
+        const totalPrice = price * quantity;
+        totalPricePreview.textContent = `总价: ¥${totalPrice.toFixed(2)}`;
     }
 }
 
@@ -176,7 +201,25 @@ async function buyProduct() {
             return;
         }
         
-        const confirmBuy = confirm(`确定要购买 ${product.name} 吗？\n价格: ¥${product.price.toFixed(2)}`);
+        // 获取购买数量
+        const quantityInput = document.getElementById('quantityInput');
+        let quantity = parseInt(quantityInput.value) || 1;
+        
+        // 验证数量
+        if (quantity <= 0) {
+            alert('购买数量必须大于0');
+            return;
+        }
+        
+        if (quantity > product.stock) {
+            alert(`购买数量不能超过库存数量 (${product.stock})`);
+            return;
+        }
+        
+        // 计算总价
+        const totalPrice = product.price * quantity;
+        
+        const confirmBuy = confirm(`确定要购买 ${product.name} 吗？\n数量: ${quantity}\n单价: ¥${product.price.toFixed(2)}\n总价: ¥${totalPrice.toFixed(2)}`);
         
         if (confirmBuy) {
             // 创建订单
@@ -184,7 +227,8 @@ async function buyProduct() {
                 itemId: productId,
                 buyerId: currentUser.id,
                 sellerId: product.sellerId,
-                totalPrice: product.price
+                quantity: quantity,
+                totalPrice: totalPrice
             };
             
             await apiRequest('/orders', {
@@ -192,7 +236,7 @@ async function buyProduct() {
                 body: JSON.stringify(orderData)
             });
             
-            alert('购买成功！请联系卖家完成交易。');
+            alert(`购买成功！购买了 ${quantity} 件 ${product.name}，总价 ¥${totalPrice.toFixed(2)}。`);
             window.location.href = 'index.html';
         }
     } catch (error) {
@@ -276,7 +320,19 @@ function showLogin() {
     document.getElementById('loginForm').style.display = 'block';
 }
 
-function logout() {
+async function handleLogout() {
+    if (currentUser) {
+        try {
+            // 调用后端logout接口记录系统日志
+            await apiRequest(`/auth/logout?userId=${currentUser.id}`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.error('记录退出日志失败:', error);
+            // 即使记录失败也继续执行退出操作
+        }
+    }
+    
     currentUser = null;
     localStorage.removeItem('currentUser');
     checkLoginStatus();
@@ -390,34 +446,155 @@ async function refreshUserInfo() {
     }
 }
 
-// 加载用户订单
-async function loadUserOrders() {
-    if (!currentUser) return;
+// 商品发布功能
+function showPublishForm() {
+    document.getElementById('publishForm').style.display = 'block';
+}
+
+function hidePublishForm() {
+    document.getElementById('publishForm').style.display = 'none';
+    // 清空表单
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemDescription').value = '';
+    document.getElementById('itemPrice').value = '';
+    document.getElementById('itemStock').value = '';
+}
+
+async function handlePublishItem(event) {
+    event.preventDefault();
     
-    const ordersList = document.getElementById('ordersList');
-    if (!ordersList) return;
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    const name = document.getElementById('itemName').value.trim();
+    const description = document.getElementById('itemDescription').value.trim();
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    const stock = parseInt(document.getElementById('itemStock').value);
+    
+    if (!name || !description || !price || !stock) {
+        alert('请填写所有必填字段');
+        return;
+    }
+    
+    if (price <= 0) {
+        alert('价格必须大于0');
+        return;
+    }
+    
+    if (stock <= 0) {
+        alert('库存数量必须大于0');
+        return;
+    }
     
     try {
-        const orders = await apiRequest(`/orders/buyer/${currentUser.id}`);
-        ordersList.innerHTML = '';
-        
-        if (orders.length === 0) {
-            ordersList.innerHTML = '<p style="text-align: center; color: #586069;">暂无订单</p>';
-            return;
-        }
-        
-        orders.forEach(order => {
-            const orderElement = createOrderElement(order);
-            ordersList.appendChild(orderElement);
+        const response = await fetch(`${API_BASE_URL}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                price: price,
+                sellerId: currentUser.id,
+                stock: stock
+            })
         });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('商品发布成功！');
+            hidePublishForm();
+            // 刷新页面显示新发布的商品
+            window.location.reload();
+        } else {
+            alert('商品发布失败: ' + (data.message || '未知错误'));
+        }
     } catch (error) {
-        ordersList.innerHTML = '<p style="text-align: center; color: #ff6b6b;">加载订单失败</p>';
-        console.error('加载订单失败:', error);
+        alert('商品发布失败: ' + error.message);
+        console.error('发布商品失败:', error);
     }
 }
 
+// 订单标签页功能
+function showBuyerOrders() {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.tab-btn[onclick="showBuyerOrders()"]').classList.add('active');
+    document.getElementById('buyerOrders').style.display = 'block';
+    document.getElementById('sellerOrders').style.display = 'none';
+    loadBuyerOrders();
+}
+
+function showSellerOrders() {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.tab-btn[onclick="showSellerOrders()"]').classList.add('active');
+    document.getElementById('buyerOrders').style.display = 'none';
+    document.getElementById('sellerOrders').style.display = 'block';
+    loadSellerOrders();
+}
+
+// 加载买家订单
+async function loadBuyerOrders() {
+    if (!currentUser) return;
+    
+    const buyerOrders = document.getElementById('buyerOrders');
+    if (!buyerOrders) return;
+    
+    try {
+        const orders = await apiRequest(`/orders/buyer/${currentUser.id}`);
+        buyerOrders.innerHTML = '';
+        
+        if (orders.length === 0) {
+            buyerOrders.innerHTML = '<p style="text-align: center; color: #586069;">暂无购买订单</p>';
+            return;
+        }
+        
+        for (const order of orders) {
+            const orderElement = await createOrderElement(order);
+            buyerOrders.appendChild(orderElement);
+        }
+    } catch (error) {
+        buyerOrders.innerHTML = '<p style="text-align: center; color: #ff6b6b;">加载订单失败</p>';
+        console.error('加载买家订单失败:', error);
+    }
+}
+
+// 加载卖家订单
+async function loadSellerOrders() {
+    if (!currentUser) return;
+    
+    const sellerOrders = document.getElementById('sellerOrders');
+    if (!sellerOrders) return;
+    
+    try {
+        const orders = await apiRequest(`/orders/seller/${currentUser.id}`);
+        sellerOrders.innerHTML = '';
+        
+        if (orders.length === 0) {
+            sellerOrders.innerHTML = '<p style="text-align: center; color: #586069;">暂无卖出订单</p>';
+            return;
+        }
+        
+        for (const order of orders) {
+            const orderElement = await createOrderElement(order);
+            sellerOrders.appendChild(orderElement);
+        }
+    } catch (error) {
+        sellerOrders.innerHTML = '<p style="text-align: center; color: #ff6b6b;">加载订单失败</p>';
+        console.error('加载卖家订单失败:', error);
+    }
+}
+
+// 加载用户订单（兼容旧版本）
+async function loadUserOrders() {
+    loadBuyerOrders();
+}
+
 // 创建订单元素
-function createOrderElement(order) {
+async function createOrderElement(order) {
     const orderDiv = document.createElement('div');
     orderDiv.className = 'order-item';
     orderDiv.style.border = '1px solid #e1e4e8';
@@ -426,25 +603,68 @@ function createOrderElement(order) {
     orderDiv.style.marginBottom = '12px';
     orderDiv.style.backgroundColor = '#f6f8fa';
     
-    orderDiv.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
-                <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
-                <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
-                <p style="margin: 4px 0;">
-                    <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
-                        ${order.status}
-                    </span>
-                </p>
+    try {
+        // 获取买家信息
+        const buyer = await apiRequest(`/users/${order.buyerId}`);
+        // 获取卖家信息
+        const seller = await apiRequest(`/users/${order.sellerId}`);
+        
+        orderDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
+                    <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
+                    <p style="margin: 4px 0; color: #586069;">数量: ${order.quantity}</p>
+                    <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
+                    <div style="margin: 8px 0;">
+                        <p style="margin: 2px 0; font-weight: 500;">买家信息:</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">用户名: ${buyer.username}</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">邮箱: ${buyer.email}</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">电话: ${buyer.phone}</p>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <p style="margin: 2px 0; font-weight: 500;">卖家信息:</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">用户名: ${seller.username}</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">邮箱: ${seller.email}</p>
+                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">电话: ${seller.phone}</p>
+                    </div>
+                    <p style="margin: 4px 0;">
+                        <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
+                            ${order.status}
+                        </span>
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 4px 0; color: #586069; font-size: 12px;">
+                        ${new Date(order.createTime).toLocaleString()}
+                    </p>
+                </div>
             </div>
-            <div>
-                <p style="margin: 4px 0; color: #586069; font-size: 12px;">
-                    ${new Date(order.createTime).toLocaleString()}
-                </p>
+        `;
+    } catch (error) {
+        console.error('获取用户信息失败:', error);
+        // 如果获取用户信息失败，显示基本订单信息
+        orderDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
+                    <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
+                    <p style="margin: 4px 0; color: #586069;">数量: ${order.quantity}</p>
+                    <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
+                    <p style="margin: 4px 0;">
+                        <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
+                            ${order.status}
+                        </span>
+                    </p>
+                </div>
+                <div>
+                    <p style="margin: 4px 0; color: #586069; font-size: 12px;">
+                        ${new Date(order.createTime).toLocaleString()}
+                    </p>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
     
     return orderDiv;
 }

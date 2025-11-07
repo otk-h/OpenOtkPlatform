@@ -18,6 +18,9 @@ public class Order {
     
     @Column(name = "seller_id", nullable = false)
     private Long sellerId;
+
+    @Column(name = "quantity", nullable = false)
+    private Long quantity;
     
     @Column(name = "total_price", nullable = false, columnDefinition = "DECIMAL(10,2)")
     private Double totalPrice;
@@ -44,12 +47,15 @@ public class Order {
         this.updateTime = new Date();
     }
     
-    public Order(Long itemId, Long buyerId, Long sellerId, Double totalPrice) {
+    public Order(Long itemId, Long buyerId, Long sellerId, Long quantity, Double totalPrice) {
         this();
         this.itemId = itemId;
         this.buyerId = buyerId;
         this.sellerId = sellerId;
+        this.quantity = quantity;
         this.totalPrice = totalPrice;
+        this.createTime = new Date();
+        this.updateTime = new Date();
     }
     
     public Long getId() {
@@ -87,6 +93,17 @@ public class Order {
         this.updateTime = new Date();
     }
     
+    public Long getQuantity() {
+        return quantity;
+    }
+    
+    public void setQuantity(Long quantity) {
+        if (quantity > 0) {
+            this.quantity = quantity;
+            this.updateTime = new Date();
+        }
+    }
+
     public Double getTotalPrice() {
         return totalPrice;
     }

@@ -23,26 +23,29 @@ public class SystemLog {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createTime;
     
-    public static final String OPERATION_REGISTER = "REGISTER";
-    public static final String OPERATION_LOGIN = "LOGIN";
-    public static final String OPERATION_LOGOUT = "LOGOUT";
-    public static final String OPERATION_DELETE_USER = "DELETE_USER";
-    public static final String OPERATION_UPDATE_USER = "UPDATE_USER";
-    public static final String OPERATION_GET_USER_INFO = "GET_USER_INFO";
-    public static final String OPERATION_RESET_PASSWORD = "RESET_PASSWORD";
-    public static final String OPERATION_PUBLISH_ITEM = "PUBLISH_ITEM";
-    public static final String OPERATION_UPDATE_ITEM = "UPDATE_ITEM";
-    public static final String OPERATION_DELETE_ITEM = "DELETE_ITEM";
-    public static final String OPERATION_REDUCE_STOCK = "REDUCE_STOCK";
-    public static final String OPERATION_CREATE_ORDER = "CREATE_ORDER";
-    public static final String OPERATION_UPDATE_ORDER = "UPDATE_ORDER";
-    public static final String OPERATION_CONFIRM_ORDER = "CONFIRM_ORDER";
-    public static final String OPERATION_COMPLETE_ORDER = "COMPLETE_ORDER";
-    public static final String OPERATION_EXCHANGE_INFO = "EXCHANGE_INFO";
-    public static final String OPERATION_CANCEL_ORDER = "CANCEL_ORDER";
-    public static final String OPERATION_RECHARGE = "RECHARGE";
-    public static final String OPERATION_DEDUCT_BALANCE = "DEDUCT_BALANCE";
-    public static final String OPERATION_GET_BALANCE = "GET_BALANCE";
+    public static final String AUTH_OPERATION_REGISTER = "AUTH_REGISTER";
+    public static final String AUTH_OPERATION_LOGIN =    "AUTH_LOGIN";
+    public static final String AUTH_OPERATION_LOGOUT =   "AUTH_LOGOUT";
+    public static final String ITEM_OPERATION_PUBLISH =  "ITEM_PUBLISH";
+    public static final String ITEM_OPERATION_UPDATE =   "ITEM_UPDATE";
+    public static final String ORDER_OPERATION_CREATE =  "ORDER_CREATE";
+    public static final String USER_OPERATION_UPDATE =   "USER_UPDATE";
+    // public static final String ORDER_OPERATION_UPDATE =  "ORDER_UPDATE";
+    // public static final String OPERATION_DELETE_USER = "DELETE_USER";
+
+    // public static final String OPERATION_GET_USER_INFO = "GET_USER_INFO";
+    // public static final String OPERATION_RESET_PASSWORD = "RESET_PASSWORD";
+
+    // public static final String OPERATION_DELETE_ITEM = "DELETE_ITEM";
+    
+
+    // public static final String OPERATION_CONFIRM_ORDER = "CONFIRM_ORDER";
+    // public static final String OPERATION_COMPLETE_ORDER = "COMPLETE_ORDER";
+    // public static final String OPERATION_EXCHANGE_INFO = "EXCHANGE_INFO";
+    // public static final String OPERATION_CANCEL_ORDER = "CANCEL_ORDER";
+    // public static final String OPERATION_RECHARGE = "RECHARGE";
+    // public static final String OPERATION_DEDUCT_BALANCE = "DEDUCT_BALANCE";
+    // public static final String OPERATION_GET_BALANCE = "GET_BALANCE";
     
     public SystemLog() {
         this.createTime = new Date();
@@ -104,13 +107,13 @@ public class SystemLog {
     }
     
     public String getLogLevel() {
-        if (OPERATION_LOGIN.equals(operationType)
-            || OPERATION_REGISTER.equals(operationType)
-            || OPERATION_LOGOUT.equals(operationType)
+        if (AUTH_OPERATION_LOGIN.equals(operationType)
+            || AUTH_OPERATION_REGISTER.equals(operationType)
+            || AUTH_OPERATION_LOGOUT.equals(operationType)
         ) {
             return "INFO";
-        } else if (OPERATION_CANCEL_ORDER.equals(operationType)) {
-            return "WARN";
+        // } else if (ORDER_OPERATION_CANCEL.equals(operationType)) {
+        //     return "WARN";
         } else {
             return "INFO";
         }

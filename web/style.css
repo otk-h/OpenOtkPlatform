@@ -396,3 +396,72 @@ body {
     border: 1px solid #f5c6cb;
     color: #721c24;
 }
+
+/* 订单标签页样式 */
+.order-tabs {
+    display: flex;
+    border-bottom: 1px solid #e1e4e8;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: #586069;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: #24292e;
+    background-color: #f6f8fa;
+}
+
+.tab-btn.active {
+    color: #0366d6;
+    border-bottom-color: #0366d6;
+    background-color: #f6f8fa;
+}
+
+/* 订单列表样式 */
+.orders-list {
+    min-height: 200px;
+}
+
+.order-item {
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background-color: #f6f8fa;
+}
+
+.order-item:hover {
+    background-color: #f3f4f6;
+    border-color: #d0d7de;
+}
+
+/* 商品发布表单样式 */
+.publish-form {
+    background: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.publish-form h4 {
+    margin-bottom: 16px;
+    color: #24292e;
+}
+
+.publish-form .form-group {
+    margin-bottom: 16px;
+}
+
+.publish-form .form-input {
+    background-color: #ffffff;
+}

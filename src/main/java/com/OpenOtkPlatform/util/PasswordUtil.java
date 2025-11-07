@@ -5,11 +5,10 @@ package com.OpenOtkPlatform.util;
  */
 public class PasswordUtil {
     
-    private PasswordUtil() {
-        // 工具类，防止实例化
-    }
+    private PasswordUtil() { }
     
     public static String encryptPassword(String password) {
+        // TODO - finish me
         return password;
     }
     
@@ -21,10 +20,12 @@ public class PasswordUtil {
     }
     
     public static boolean isPasswordStrong(String password) {
+        // TODO - finish me
         return password != null && password.length() >= 3;
     }
     
     public static String generateRandomPassword() {
-        return "test123";
+        // TODO - finish me
+        return "random_password";
     }
 }

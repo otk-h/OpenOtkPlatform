@@ -74,31 +74,9 @@ INSERT INTO users (username, password, email, phone, balance) VALUES
 ('user1', 'user1.password', 'user1@example.com', '01234567890', 500.00),
 ('user2', 'user2.password', 'user2@example.com', '01234567890', 200.00);
 
--- 插入测试商品
-INSERT INTO items (name, description, price, seller_id, stock) VALUES
-('example item 1', 'example desciption 1', 7999.00, 3, 10),
-('example item 2', 'example desciption 2', 8999.00, 3, 5),
-('example item 3', 'example desciption 3', 7999.00, 3, 10),
-('example item 4', 'example desciption 4', 8999.00, 3, 5);
-
--- 插入测试订单
-INSERT INTO orders (item_id, buyer_id, seller_id, total_price, status) VALUES
-(1, 2, 3, 7999.00, 'COMPLETED'),
-(3, 2, 3, 1899.00, 'CONFIRMED'),
-(4, 2, 3, 2999.00, 'PENDING');
-
--- 插入系统日志示例
-INSERT INTO system_logs (operation_type, user_id, description) VALUES
-('REGISTER', 1, 'User registered account'),
-('LOGIN', 1, 'User logged in'),
-('PUBLISH_ITEM', 3, 'User published item, Item ID: 1'),
-('PUBLISH_ITEM', 3, 'User published item, Item ID: 3'),
-('CREATE_ORDER', 2, 'User created order, Order ID: 1'),
-('COMPLETE_ORDER', 2, 'User completed order, Order ID: 1');
-
 -- 创建视图：用户订单统计
 CREATE VIEW user_order_stats AS
-SELECT 
+SELECT
     u.id AS user_id,
     u.username,
     COUNT(DISTINCT o.id) AS total_orders,

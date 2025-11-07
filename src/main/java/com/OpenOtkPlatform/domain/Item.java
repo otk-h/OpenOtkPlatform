@@ -38,7 +38,7 @@ public class Item {
     
     public Item() {
         this.stock = 0;
-        this.available = true;
+        this.available = false;
         this.createTime = new Date();
         this.updateTime = new Date();
     }
@@ -51,6 +51,8 @@ public class Item {
         this.sellerId = sellerId;
         this.stock = stock;
         this.available = stock > 0;
+        this.createTime = new Date();
+        this.updateTime = new Date();
     }
     
     public Long getId() {

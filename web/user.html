@@ -92,15 +92,51 @@
 
                     <!-- 订单管理 -->
                     <div class="orders-section">
-                        <h3>我的订单</h3>
-                        <div id="ordersList" class="orders-list">
+                        <h3>订单管理</h3>
+                        <div class="order-tabs">
+                            <button class="tab-btn active" onclick="showBuyerOrders()">我购买的订单</button>
+                            <button class="tab-btn" onclick="showSellerOrders()">我卖出的订单</button>
+                        </div>
+                        <div id="buyerOrders" class="orders-list">
                             <p>加载中...</p>
+                        </div>
+                        <div id="sellerOrders" class="orders-list" style="display: none;">
+                            <p>加载中...</p>
+                        </div>
+                    </div>
+
+                    <!-- 商品管理 -->
+                    <div class="item-management">
+                        <h3>商品管理</h3>
+                        <button onclick="showPublishForm()" class="btn btn-primary">发布商品</button>
+                        <div id="publishForm" class="publish-form" style="display: none; margin-top: 20px;">
+                            <h4>发布新商品</h4>
+                            <form onsubmit="handlePublishItem(event)">
+                                <div class="form-group">
+                                    <label for="itemName">商品名称</label>
+                                    <input type="text" id="itemName" required class="form-input" placeholder="输入商品名称">
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemDescription">商品描述</label>
+                                    <textarea id="itemDescription" required class="form-input" placeholder="输入商品描述" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemPrice">价格</label>
+                                    <input type="number" id="itemPrice" required class="form-input" min="0.01" step="0.01" placeholder="输入价格">
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemStock">库存数量</label>
+                                    <input type="number" id="itemStock" required class="form-input" min="1" placeholder="输入库存数量">
+                                </div>
+                                <button type="submit" class="btn btn-primary">发布商品</button>
+                                <button type="button" onclick="hidePublishForm()" class="btn btn-secondary">取消</button>
+                            </form>
                         </div>
                     </div>
 
                     <!-- 用户操作 -->
                     <div class="profile-actions">
-                        <button onclick="logout()" class="btn btn-secondary">退出登录</button>
+                        <button onclick="handleLogout()" class="btn btn-secondary">退出登录</button>
                     </div>
                 </div>
             </div>

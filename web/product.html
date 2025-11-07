@@ -38,6 +38,15 @@
                     <div class="product-stock" id="productStock">库存: 0</div>
                     <div class="product-seller" id="productSeller">卖家: 未知</div>
                     
+                    <!-- 数量选择 -->
+                    <div class="quantity-section" style="margin: 20px 0;">
+                        <div class="form-group">
+                            <label for="quantityInput" style="font-weight: 500; margin-bottom: 8px; display: block;">购买数量</label>
+                            <input type="number" id="quantityInput" min="1" value="1" class="form-input" style="width: 100px; display: inline-block;">
+                            <span id="totalPricePreview" style="margin-left: 12px; font-weight: 500; color: #2ea44f;">总价: ¥0.00</span>
+                        </div>
+                    </div>
+                    
                     <div class="product-actions">
                         <button onclick="buyProduct()" class="btn btn-primary" id="buyBtn">立即购买</button>
                         <a href="index.html" class="btn btn-secondary">返回首页</a>
