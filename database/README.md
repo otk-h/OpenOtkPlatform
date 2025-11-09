@@ -75,6 +75,7 @@ spring.jpa.show-sql=true
 | item_id | BIGINT | 商品ID | 外键，非空 |
 | buyer_id | BIGINT | 买家ID | 外键，非空 |
 | seller_id | BIGINT | 卖家ID | 外键，非空 |
+| quantity | BIGINT | 购买数量 | 非空 |
 | total_price | DECIMAL(10,2) | 订单总价 | 非空 |
 | status | VARCHAR(20) | 订单状态 | 默认'PENDING' |
 | create_time | TIMESTAMP | 创建时间 | 默认当前时间 |

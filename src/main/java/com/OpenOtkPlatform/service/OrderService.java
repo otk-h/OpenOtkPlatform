@@ -96,6 +96,25 @@ public class OrderService {
         }
     }
     
+    public boolean confirmOrder(Long orderId) {
+        if (orderId == null || orderId <= 0) {
+            return false;
+        }
+        
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (!orderOpt.isPresent() || !orderOpt.get().confirmOrder()) {
+            return false;
+        }
+        
+        Order order = orderOpt.get();
+        try {
+            orderRepository.save(order);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
     public boolean completeOrder(Long orderId) {
         if (orderId == null || orderId <= 0) {
             return false;
@@ -113,23 +132,6 @@ public class OrderService {
         } catch (Exception e) {
             return false;
         }
-    }
-    
-    public String exchangeContactInfo(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return null;
-        }
-        
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (!orderOpt.isPresent() || !orderOpt.get().isConfirmed()) {
-            return null;
-        }
-        
-        Order order = orderOpt.get();
-        String buyerContact = userService.getUserById(order.getBuyerId()).getPhone();
-        String sellerContact = userService.getUserById(order.getSellerId()).getPhone();
-        
-        return String.format("买家联系方式: %s, 卖家联系方式: %s", buyerContact, sellerContact);
     }
     
     public boolean validateOrderCreation(Long itemId, Long buyerId, Long sellerId, Long quantity) {

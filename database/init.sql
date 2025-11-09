@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS items (
     price DECIMAL(10,2) NOT NULL,
     seller_id BIGINT NOT NULL,
     stock INT NOT NULL DEFAULT 0,
-    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    available BOOLEAN NOT NULL DEFAULT FALSE,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_seller_id (seller_id),
-    INDEX idx_status (status),
+    INDEX idx_available (available),
     INDEX idx_name (name),
     FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS system_logs (
 
 -- 插入测试用户
 INSERT INTO users (username, password, email, phone, balance) VALUES
-('admin', 'admin.password', 'admin@example.com', '01234567890', 1000.00),
+('admin', 'admin.password', 'admin@example.com', '01234567890', 100000.00),
 ('user1', 'user1.password', 'user1@example.com', '01234567890', 500.00),
 ('user2', 'user2.password', 'user2@example.com', '01234567890', 200.00);
 

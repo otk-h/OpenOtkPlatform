@@ -138,11 +138,11 @@ cd OpenOtkPlatform
 # 编译项目
 mvn clean compile
 
-# # 运行测试
-# mvn test
+# 运行测试
+mvn test
 
-# # 打包为可执行JAR
-# mvn clean package
+# 打包为可执行JAR
+mvn clean package
 ```
 
 3. **运行项目**
@@ -150,8 +150,8 @@ mvn clean compile
 # 开发模式运行
 mvn spring-boot:run
 
-# # 或者运行打包后的JAR
-# java -jar target/OpenOtkPlatform-1.0.0.jar
+# 或者运行打包后的JAR
+java -jar target/OpenOtkPlatform-1.0.0.jar
 ```
 
 4. **访问应用**
@@ -212,17 +212,32 @@ POST /api/auth/login
 
 ### 订单接口 (OrderController)
 
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| POST | `/api/orders` | 创建订单 |
-| GET | `/api/orders` | 获取所有订单 |
-| GET | `/api/orders/{id}` | 获取订单详情 |
-| GET | `/api/orders/buyer/{buyerId}` | 获取买家订单 |
-| GET | `/api/orders/seller/{sellerId}` | 获取卖家订单 |
-| PUT | `/api/orders/{id}/status` | 更新订单状态 |
-| POST | `/api/orders/{id}/cancel` | 取消订单 |
-| POST | `/api/orders/{id}/complete` | 完成订单 |
-| GET | `/api/orders/{id}/contact` | 交换联系方式 |
+| 方法 | 端点 | 描述 | 请求体 |
+|------|------|------|--------|
+| POST | `/api/orders` | 创建订单 | `{itemId, buyerId, sellerId, quantity, totalPrice}` |
+| GET | `/api/orders` | 获取所有订单 | - |
+| GET | `/api/orders/{id}` | 获取订单详情 | - |
+| GET | `/api/orders/buyer/{buyerId}` | 获取买家订单 | - |
+| GET | `/api/orders/seller/{sellerId}` | 获取卖家订单 | - |
+| POST | `/api/orders/{id}/confirm` | 卖家确认订单 | - |
+| POST | `/api/orders/{id}/complete` | 买家确认收货 | - |
+| POST | `/api/orders/{id}/cancel` | 取消订单 | - |
+
+**示例请求：**
+```json
+// 创建订单
+POST /api/orders
+{
+  "itemId": 1,
+  "buyerId": 2,
+  "sellerId": 3,
+  "quantity": 1,
+  "totalPrice": 7999.00
+}
+
+// 取消订单
+POST /api/orders/1/cancel
+```
 
 ## 🗄️ 数据库设计
 
@@ -346,9 +361,6 @@ java -jar target/OpenOtkPlatform-1.0.0.jar --spring.profiles.active=prod
 ## 🚧 未来规划 (TODO)
 
 ### 功能增强
-- [ ] **UI界面更新** - 现代化UI设计、响应式布局优化、用户体验改进
-- [ ] **充值功能完善** - 在线支付集成、充值记录管理、支付安全验证
-- [ ] **订单状态更新** - 订单状态流转、状态通知、订单跟踪系统
 - [ ] **评论功能** - 商品评价系统、评分机制、评论管理
 - [ ] **管理员功能** - 后台管理系统、用户管理、商品审核、数据统计
 - [ ] **网页查看数据库内容功能** - 数据库可视化、实时数据监控、数据导出

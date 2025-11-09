@@ -21,7 +21,7 @@ async function apiRequest(url, options = {}) {
             if (!data.success) {
                 throw new Error(data.message || '请求失败');
             }
-            // 如果成功且有数据，返回数据；否则返回整个响应
+            // 如果成功且有data字段，返回data；否则返回整个响应
             return data.data !== undefined ? data.data : data;
         }
         
@@ -231,13 +231,16 @@ async function buyProduct() {
                 totalPrice: totalPrice
             };
             
-            await apiRequest('/orders', {
-                method: 'POST',
-                body: JSON.stringify(orderData)
-            });
-            
-            alert(`购买成功！购买了 ${quantity} 件 ${product.name}，总价 ¥${totalPrice.toFixed(2)}。`);
-            window.location.href = 'index.html';
+        await apiRequest('/orders', {
+            method: 'POST',
+            body: JSON.stringify(orderData)
+        });
+        
+        // 刷新用户信息以显示更新后的余额
+        await refreshUserInfo();
+        
+        alert(`购买成功！购买了 ${quantity} 件 ${product.name}，总价 ¥${totalPrice.toFixed(2)}。`);
+        window.location.href = 'index.html';
         }
     } catch (error) {
         alert('购买失败，请稍后重试');
@@ -258,20 +261,25 @@ async function handleLogin(event) {
     }
     
     try {
-        const response = await apiRequest('/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ username, password })
         });
         
+        const data = await response.json();
+        
         // 根据后端AuthController的LoginResponse格式处理
-        if (response.success) {
-            currentUser = response.user;
+        if (data.success) {
+            currentUser = data.user;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             checkLoginStatus();
             alert('登录成功！');
             window.location.href = 'index.html';
         } else {
-            alert(response.message || '登录失败');
+            alert(data.message || '登录失败');
         }
     } catch (error) {
         alert('登录失败: ' + error.message);
@@ -293,16 +301,21 @@ async function handleRegister(event) {
     }
     
     try {
-        const response = await apiRequest('/auth/register', {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ username, password, email, phone })
         });
         
-        if (response.success) {
+        const data = await response.json();
+        
+        if (data.success) {
             alert('注册成功！请登录');
             showLogin();
         } else {
-            alert(response.message || '注册失败');
+            alert(data.message || '注册失败');
         }
     } catch (error) {
         alert('注册失败: ' + error.message);
@@ -340,61 +353,6 @@ async function handleLogout() {
     window.location.href = 'index.html';
 }
 
-// 检查登录状态
-function checkLoginStatus() {
-    const storedUser = localStorage.getItem('currentUser');
-    
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-    }
-    
-    // 更新导航栏用户信息
-    const userInfoElements = document.querySelectorAll('#userInfo');
-    const loginLinks = document.querySelectorAll('.nav-link[href="user.html"]');
-    const userProfile = document.getElementById('userProfile');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    
-    if (currentUser) {
-        // 更新导航栏
-        userInfoElements.forEach(element => {
-            element.textContent = `欢迎, ${currentUser.username}`;
-            element.style.display = 'inline';
-        });
-        
-        loginLinks.forEach(link => {
-            link.textContent = '用户中心';
-        });
-        
-        // 更新用户中心页面
-        if (userProfile && loginForm && registerForm) {
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'none';
-            userProfile.style.display = 'block';
-            
-            document.getElementById('profileUsername').textContent = currentUser.username;
-            document.getElementById('profileEmail').textContent = currentUser.email;
-            document.getElementById('profilePhone').textContent = currentUser.phone;
-            document.getElementById('profileBalance').textContent = currentUser.balance.toFixed(2);
-        }
-    } else {
-        // 用户未登录
-        userInfoElements.forEach(element => {
-            element.style.display = 'none';
-        });
-        
-        loginLinks.forEach(link => {
-            link.textContent = '登录/注册';
-        });
-        
-        // 更新用户中心页面
-        if (userProfile && loginForm && registerForm) {
-            userProfile.style.display = 'none';
-            loginForm.style.display = 'block';
-            registerForm.style.display = 'none';
-        }
-    }
-}
 
 // 余额充值功能
 async function rechargeBalance() {
@@ -412,17 +370,19 @@ async function rechargeBalance() {
     }
     
     try {
-        const response = await apiRequest(`/users/${currentUser.id}/recharge?amount=${amount}`, {
+        const response = await fetch(`${API_BASE_URL}/users/${currentUser.id}/recharge?amount=${amount}`, {
             method: 'POST'
         });
         
-        if (response.success) {
+        const data = await response.json();
+        
+        if (data.success) {
             alert('充值成功！');
             amountInput.value = '';
             // 刷新用户信息
             await refreshUserInfo();
         } else {
-            alert(response.message || '充值失败');
+            alert(data.message || '充值失败');
         }
     } catch (error) {
         alert('充值失败: ' + error.message);
@@ -448,11 +408,11 @@ async function refreshUserInfo() {
 
 // 商品发布功能
 function showPublishForm() {
-    document.getElementById('publishForm').style.display = 'block';
+    document.getElementById('publishModal').style.display = 'flex';
 }
 
 function hidePublishForm() {
-    document.getElementById('publishForm').style.display = 'none';
+    document.getElementById('publishModal').style.display = 'none';
     // 清空表单
     document.getElementById('itemName').value = '';
     document.getElementById('itemDescription').value = '';
@@ -508,8 +468,9 @@ async function handlePublishItem(event) {
         if (data.success) {
             alert('商品发布成功！');
             hidePublishForm();
-            // 刷新页面显示新发布的商品
-            window.location.reload();
+            // 刷新用户商品列表
+            loadUserItems();
+            await refreshUserInfo();
         } else {
             alert('商品发布失败: ' + (data.message || '未知错误'));
         }
@@ -518,6 +479,85 @@ async function handlePublishItem(event) {
         console.error('发布商品失败:', error);
     }
 }
+
+// 加载用户发布的商品
+async function loadUserItems() {
+    if (!currentUser) return;
+    
+    const userItems = document.getElementById('userItems');
+    if (!userItems) return;
+    
+    try {
+        const items = await apiRequest(`/items/seller/${currentUser.id}`);
+        userItems.innerHTML = '';
+        
+        if (items.length === 0) {
+            userItems.innerHTML = '<p class="empty-state">暂无发布的商品</p>';
+            return;
+        }
+        
+        items.forEach(item => {
+            const itemElement = createItemCard(item);
+            userItems.appendChild(itemElement);
+        });
+    } catch (error) {
+        userItems.innerHTML = '<p class="empty-state">加载商品失败</p>';
+        console.error('加载用户商品失败:', error);
+    }
+}
+
+// 创建商品卡片
+function createItemCard(item) {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'item-card';
+    
+    itemDiv.innerHTML = `
+        <div class="item-header">
+            <h4 class="item-name">${item.name}</h4>
+            <div class="item-price">¥${item.price.toFixed(2)}</div>
+        </div>
+        <p class="item-description">${item.description}</p>
+        <div class="item-meta">
+            <span>库存: ${item.stock}</span>
+            <span>状态: ${item.available ? '在售' : '下架'}</span>
+        </div>
+        <div class="item-actions">
+            <button onclick="editItem(${item.id})" class="btn btn-secondary btn-sm">编辑</button>
+            <button onclick="deleteItem(${item.id})" class="btn btn-secondary btn-sm">删除</button>
+        </div>
+    `;
+    
+    return itemDiv;
+}
+
+// 编辑商品
+function editItem(itemId) {
+    // TODO: 实现商品编辑功能
+    alert('商品编辑功能开发中...');
+}
+
+// 删除商品
+async function deleteItem(itemId) {
+    if (!confirm('确定要删除这个商品吗？')) {
+        return;
+    }
+    
+    try {
+        // TODO: 实现商品删除API调用
+        // const response = await apiRequest(`/items/${itemId}`, { method: 'DELETE' });
+        // if (response.success) {
+        //     alert('商品删除成功');
+        //     loadUserItems();
+        // } else {
+        //     alert('商品删除失败');
+        // }
+        alert('商品删除功能开发中...');
+    } catch (error) {
+        alert('删除商品失败: ' + error.message);
+        console.error('删除商品失败:', error);
+    }
+}
+
 
 // 订单标签页功能
 function showBuyerOrders() {
@@ -597,76 +637,177 @@ async function loadUserOrders() {
 async function createOrderElement(order) {
     const orderDiv = document.createElement('div');
     orderDiv.className = 'order-item';
-    orderDiv.style.border = '1px solid #e1e4e8';
-    orderDiv.style.borderRadius = '6px';
-    orderDiv.style.padding = '16px';
-    orderDiv.style.marginBottom = '12px';
-    orderDiv.style.backgroundColor = '#f6f8fa';
     
     try {
         // 获取买家信息
         const buyer = await apiRequest(`/users/${order.buyerId}`);
         // 获取卖家信息
         const seller = await apiRequest(`/users/${order.sellerId}`);
+        // 获取商品信息
+        const item = await apiRequest(`/items/${order.itemId}`);
         
         orderDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1;">
-                    <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
-                    <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
-                    <p style="margin: 4px 0; color: #586069;">数量: ${order.quantity}</p>
-                    <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
-                    <div style="margin: 8px 0;">
-                        <p style="margin: 2px 0; font-weight: 500;">买家信息:</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">用户名: ${buyer.username}</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">邮箱: ${buyer.email}</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">电话: ${buyer.phone}</p>
+            <div class="order-header">
+                <div class="order-id">订单 #${order.id}</div>
+                <div class="order-status status-${order.status.toLowerCase()}">${order.status}</div>
+            </div>
+            <div class="order-details">
+                <p><strong>商品:</strong> ${item.name}</p>
+                <p><strong>数量:</strong> ${order.quantity}</p>
+                <p><strong>总价:</strong> ¥${order.totalPrice.toFixed(2)}</p>
+                <div class="user-info-section">
+                    <div class="user-info-row">
+                        <strong>买家信息:</strong>
+                        <div class="user-details">
+                            <p>姓名: ${buyer.username}</p>
+                            <p>邮箱: ${buyer.email}</p>
+                            <p>电话: ${buyer.phone}</p>
+                        </div>
                     </div>
-                    <div style="margin: 8px 0;">
-                        <p style="margin: 2px 0; font-weight: 500;">卖家信息:</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">用户名: ${seller.username}</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">邮箱: ${seller.email}</p>
-                        <p style="margin: 2px 0; color: #586069; font-size: 14px;">电话: ${seller.phone}</p>
+                    <div class="user-info-row">
+                        <strong>卖家信息:</strong>
+                        <div class="user-details">
+                            <p>姓名: ${seller.username}</p>
+                            <p>邮箱: ${seller.email}</p>
+                            <p>电话: ${seller.phone}</p>
+                        </div>
                     </div>
-                    <p style="margin: 4px 0;">
-                        <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
-                            ${order.status}
-                        </span>
-                    </p>
                 </div>
-                <div style="text-align: right;">
-                    <p style="margin: 4px 0; color: #586069; font-size: 12px;">
-                        ${new Date(order.createTime).toLocaleString()}
-                    </p>
+                <p><strong>创建时间:</strong> ${new Date(order.createTime).toLocaleString()}</p>
+                <div class="order-actions">
+                    ${createOrderActions(order)}
                 </div>
             </div>
         `;
     } catch (error) {
-        console.error('获取用户信息失败:', error);
-        // 如果获取用户信息失败，显示基本订单信息
+        console.error('获取订单信息失败:', error);
+        // 如果获取信息失败，显示基本订单信息
         orderDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h4 style="margin: 0 0 8px 0;">订单 #${order.id}</h4>
-                    <p style="margin: 4px 0; color: #586069;">商品ID: ${order.itemId}</p>
-                    <p style="margin: 4px 0; color: #586069;">数量: ${order.quantity}</p>
-                    <p style="margin: 4px 0; color: #586069;">总价: ¥${order.totalPrice.toFixed(2)}</p>
-                    <p style="margin: 4px 0;">
-                        <span style="padding: 4px 8px; background: ${getStatusColor(order.status)}; color: white; border-radius: 4px; font-size: 12px;">
-                            ${order.status}
-                        </span>
-                    </p>
-                </div>
-                <div>
-                    <p style="margin: 4px 0; color: #586069; font-size: 12px;">
-                        ${new Date(order.createTime).toLocaleString()}
-                    </p>
+            <div class="order-header">
+                <div class="order-id">订单 #${order.id}</div>
+                <div class="order-status status-${order.status.toLowerCase()}">${order.status}</div>
+            </div>
+            <div class="order-details">
+                <p><strong>商品ID:</strong> ${order.itemId}</p>
+                <p><strong>数量:</strong> ${order.quantity}</p>
+                <p><strong>总价:</strong> ¥${order.totalPrice.toFixed(2)}</p>
+                <p><strong>创建时间:</strong> ${new Date(order.createTime).toLocaleString()}</p>
+                <div class="order-actions">
+                    ${createOrderActions(order)}
                 </div>
             </div>
         `;
     }
     
     return orderDiv;
+}
+
+// 创建订单操作按钮
+function createOrderActions(order) {
+    const isBuyer = currentUser && order.buyerId === currentUser.id;
+    const isSeller = currentUser && order.sellerId === currentUser.id;
+    
+    let actions = '';
+    
+    if (isBuyer) {
+        // 买家操作
+        if (order.status === 'PENDING' || order.status === 'CONFIRMED') {
+            actions += `<button onclick="cancelOrder(${order.id})" class="btn btn-secondary btn-sm">取消订单</button>`;
+        }
+        if (order.status === 'CONFIRMED') {
+            actions += `<button onclick="completeOrder(${order.id})" class="btn btn-primary btn-sm">确认收货</button>`;
+        }
+    }
+    
+    if (isSeller) {
+        // 卖家操作
+        if (order.status === 'PENDING') {
+            actions += `<button onclick="confirmOrder(${order.id})" class="btn btn-primary btn-sm">确认订单</button>`;
+        }
+    }
+    
+    return actions;
+}
+
+// 卖家确认订单
+async function confirmOrder(orderId) {
+    if (!confirm('确定要确认这个订单吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/confirm`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('订单确认成功！');
+            // 刷新订单列表
+            loadUserOrders();
+            await refreshUserInfo();
+        } else {
+            alert('订单确认失败: ' + data.message);
+        }
+    } catch (error) {
+        alert('订单确认失败: ' + error.message);
+        console.error('确认订单失败:', error);
+    }
+}
+
+// 买家确认收货
+async function completeOrder(orderId) {
+    if (!confirm('确定要确认收货吗？订单完成后将无法取消。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/complete`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('订单完成成功！');
+            // 刷新订单列表
+            loadUserOrders();
+            await refreshUserInfo();
+        } else {
+            alert('订单完成失败: ' + data.message);
+        }
+    } catch (error) {
+        alert('订单完成失败: ' + error.message);
+        console.error('完成订单失败:', error);
+    }
+}
+
+// 买家取消订单
+async function cancelOrder(orderId) {
+    if (!confirm('确定要取消这个订单吗？取消后资金将退还到您的账户。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('订单取消成功！资金已退还到您的账户。');
+            // 刷新订单列表和用户信息
+            loadUserOrders();
+            await refreshUserInfo();
+        } else {
+            alert('订单取消失败: ' + data.message);
+        }
+    } catch (error) {
+        alert('订单取消失败: ' + error.message);
+        console.error('取消订单失败:', error);
+    }
 }
 
 // 获取订单状态颜色
@@ -680,7 +821,7 @@ function getStatusColor(status) {
     return colors[status] || '#6a737d';
 }
 
-// 更新检查登录状态函数，添加订单加载
+// 检查登录状态
 function checkLoginStatus() {
     const storedUser = localStorage.getItem('currentUser');
     
@@ -717,7 +858,8 @@ function checkLoginStatus() {
             document.getElementById('profilePhone').textContent = currentUser.phone;
             document.getElementById('profileBalance').textContent = currentUser.balance.toFixed(2);
             
-            // 加载用户订单
+            // 加载用户商品和订单
+            loadUserItems();
             loadUserOrders();
         }
     } else {

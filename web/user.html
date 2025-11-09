@@ -72,77 +72,127 @@
 
                 <!-- 用户信息 -->
                 <div id="userProfile" class="user-profile" style="display: none;">
-                    <h2>个人信息</h2>
-                    <div class="profile-info">
-                        <p><strong>用户名:</strong> <span id="profileUsername"></span></p>
-                        <p><strong>邮箱:</strong> <span id="profileEmail"></span></p>
-                        <p><strong>手机号:</strong> <span id="profilePhone"></span></p>
-                        <p><strong>余额:</strong> ¥<span id="profileBalance">0.00</span></p>
-                    </div>
-                    
-                    <!-- 余额管理 -->
-                    <div class="balance-section">
-                        <h3>余额管理</h3>
-                        <div class="form-group">
-                            <label for="rechargeAmount">充值金额</label>
-                            <input type="number" id="rechargeAmount" min="1" step="0.01" class="form-input" placeholder="输入充值金额">
-                        </div>
-                        <button onclick="rechargeBalance()" class="btn btn-primary">充值</button>
-                    </div>
+                    <div class="profile-layout">
+                        <!-- 左侧面板 -->
+                        <div class="profile-sidebar">
+                            <div class="profile-card">
+                                <div class="profile-avatar">
+                                    <img id="userAvatar" src="images\uploads\avatars/default-avatar.png" alt="用户头像" class="avatar-img">
+                                    <div class="avatar-upload">
+                                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                        <button onclick="document.getElementById('avatarInput').click()" class="btn btn-secondary btn-sm">更换头像</button>
+                                    </div>
+                                </div>
+                                <div class="profile-info">
+                                    <h2 id="profileUsername" class="profile-name"></h2>
+                                    <div class="profile-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">邮箱</span>
+                                            <span id="profileEmail" class="detail-value"></span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">电话</span>
+                                            <span id="profilePhone" class="detail-value"></span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">余额</span>
+                                            <span id="profileBalance" class="detail-value balance-amount">¥0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <!-- 订单管理 -->
-                    <div class="orders-section">
-                        <h3>订单管理</h3>
-                        <div class="order-tabs">
-                            <button class="tab-btn active" onclick="showBuyerOrders()">我购买的订单</button>
-                            <button class="tab-btn" onclick="showSellerOrders()">我卖出的订单</button>
-                        </div>
-                        <div id="buyerOrders" class="orders-list">
-                            <p>加载中...</p>
-                        </div>
-                        <div id="sellerOrders" class="orders-list" style="display: none;">
-                            <p>加载中...</p>
-                        </div>
-                    </div>
+                            <!-- 充值功能 -->
+                            <div class="recharge-section">
+                                <h3 class="section-title">余额充值</h3>
+                                <div class="form-group">
+                                    <input type="number" id="rechargeAmount" min="1" step="0.01" class="form-input" placeholder="输入充值金额">
+                                </div>
+                                <button onclick="rechargeBalance()" class="btn btn-primary btn-block">充值</button>
+                            </div>
 
-                    <!-- 商品管理 -->
-                    <div class="item-management">
-                        <h3>商品管理</h3>
-                        <button onclick="showPublishForm()" class="btn btn-primary">发布商品</button>
-                        <div id="publishForm" class="publish-form" style="display: none; margin-top: 20px;">
-                            <h4>发布新商品</h4>
-                            <form onsubmit="handlePublishItem(event)">
-                                <div class="form-group">
-                                    <label for="itemName">商品名称</label>
-                                    <input type="text" id="itemName" required class="form-input" placeholder="输入商品名称">
-                                </div>
-                                <div class="form-group">
-                                    <label for="itemDescription">商品描述</label>
-                                    <textarea id="itemDescription" required class="form-input" placeholder="输入商品描述" rows="3"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="itemPrice">价格</label>
-                                    <input type="number" id="itemPrice" required class="form-input" min="0.01" step="0.01" placeholder="输入价格">
-                                </div>
-                                <div class="form-group">
-                                    <label for="itemStock">库存数量</label>
-                                    <input type="number" id="itemStock" required class="form-input" min="1" placeholder="输入库存数量">
-                                </div>
-                                <button type="submit" class="btn btn-primary">发布商品</button>
-                                <button type="button" onclick="hidePublishForm()" class="btn btn-secondary">取消</button>
-                            </form>
+                            <!-- 快速操作 -->
+                            <div class="quick-actions">
+                                <button onclick="handleLogout()" class="btn btn-secondary btn-block">退出登录</button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 用户操作 -->
-                    <div class="profile-actions">
-                        <button onclick="handleLogout()" class="btn btn-secondary">退出登录</button>
+                        <!-- 右侧内容 -->
+                        <div class="profile-content">
+                            <!-- 商品管理 -->
+                            <div class="content-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">商品管理</h3>
+                                    <button onclick="showPublishForm()" class="btn btn-primary btn-sm">发布商品</button>
+                                </div>
+                                <div id="userItems" class="items-grid">
+                                    <p class="empty-state">暂无发布的商品</p>
+                                </div>
+                            </div>
+
+                            <!-- 订单管理 -->
+                            <div class="content-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">订单管理</h3>
+                                    <div class="order-tabs">
+                                        <button class="tab-btn active" onclick="showBuyerOrders()">购买订单</button>
+                                        <button class="tab-btn" onclick="showSellerOrders()">销售订单</button>
+                                    </div>
+                                </div>
+                                <div id="buyerOrders" class="orders-list">
+                                    <p class="empty-state">暂无购买订单</p>
+                                </div>
+                                <div id="sellerOrders" class="orders-list" style="display: none;">
+                                    <p class="empty-state">暂无销售订单</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- 发布商品模态框 -->
+    <div id="publishModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>发布新商品</h3>
+                <button onclick="hidePublishForm()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handlePublishItem(event)">
+                    <div class="form-group">
+                        <label for="itemName">商品名称</label>
+                        <input type="text" id="itemName" required class="form-input" placeholder="输入商品名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemDescription">商品描述</label>
+                        <textarea id="itemDescription" required class="form-input" placeholder="输入商品描述" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice">价格</label>
+                        <input type="number" id="itemPrice" required class="form-input" min="0.01" step="0.01" placeholder="输入价格">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemStock">库存数量</label>
+                        <input type="number" id="itemStock" required class="form-input" min="1" placeholder="输入库存数量">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">发布商品</button>
+                        <button type="button" onclick="hidePublishForm()" class="btn btn-secondary">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+    </script>
 </body>
 </html>

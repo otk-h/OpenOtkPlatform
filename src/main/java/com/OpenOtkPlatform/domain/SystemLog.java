@@ -29,7 +29,11 @@ public class SystemLog {
     public static final String ITEM_OPERATION_PUBLISH =  "ITEM_PUBLISH";
     public static final String ITEM_OPERATION_UPDATE =   "ITEM_UPDATE";
     public static final String ORDER_OPERATION_CREATE =  "ORDER_CREATE";
+    public static final String ORDER_OPERATION_CONFIRM = "ORDER_CONFIRM";
+    public static final String ORDER_OPERATION_COMPLETE ="ORDER_COMPLETE";
+    public static final String ORDER_OPERATION_CANCEL =  "ORDER_CANCEL";
     public static final String USER_OPERATION_UPDATE =   "USER_UPDATE";
+    
     // public static final String ORDER_OPERATION_UPDATE =  "ORDER_UPDATE";
     // public static final String OPERATION_DELETE_USER = "DELETE_USER";
 
@@ -38,11 +42,7 @@ public class SystemLog {
 
     // public static final String OPERATION_DELETE_ITEM = "DELETE_ITEM";
     
-
-    // public static final String OPERATION_CONFIRM_ORDER = "CONFIRM_ORDER";
-    // public static final String OPERATION_COMPLETE_ORDER = "COMPLETE_ORDER";
     // public static final String OPERATION_EXCHANGE_INFO = "EXCHANGE_INFO";
-    // public static final String OPERATION_CANCEL_ORDER = "CANCEL_ORDER";
     // public static final String OPERATION_RECHARGE = "RECHARGE";
     // public static final String OPERATION_DEDUCT_BALANCE = "DEDUCT_BALANCE";
     // public static final String OPERATION_GET_BALANCE = "GET_BALANCE";

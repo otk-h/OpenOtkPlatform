@@ -51,8 +51,9 @@ public class OrderController {
         
         Order order = orderService.createOrder(itemId, buyerId, sellerId, quantity, totalPrice);
         if (order != null) {
-            // 扣减买家余额
+            // 扣减买家余额并增加卖家余额
             userService.deductBalance(buyerId, totalPrice);
+            userService.rechargeBalance(sellerId, totalPrice);
             
             logService.logOrderCreate(buyerId, order.getId());
             
@@ -94,83 +95,66 @@ public class OrderController {
         return ResponseEntity.ok(new ApiResponse(true, "Success", orders));
     }
     
-    // @PutMapping("/{id}/status")
-    // public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
-    //     if (id == null || id <= 0 || status == null || status.trim().isEmpty()) {
-    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "inValid arg"));
-    //     }
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<?> confirmOrder(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
+        }
         
-    //     boolean success = orderService.updateOrderStatus(id, status);
-    //     if (success) {
-    //         Order order = orderService.getOrderById(id);
-    //         if (order != null) {
-    //             logService.logOrderUpdate(order.getBuyerId(), id, status);
-    //         }
-    //         return ResponseEntity.ok(new ApiResponse(true, "订单状态更新成功"));
-    //     }
-    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "订单状态更新失败"));
-    // }
+        Order order = orderService.getOrderById(id);
+        if (order == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单不存在"));
+        }
+        
+        boolean success = orderService.confirmOrder(id);
+        if (success) {
+            logService.logOrderConfirm(order.getSellerId(), id);
+            return ResponseEntity.ok(new ApiResponse(true, "订单确认成功"));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单确认失败"));
+    }
     
-    // @PostMapping("/{id}/cancel")
-    // public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
-    //     if (id == null || id <= 0) {
-    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
-    //     }
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> completeOrder(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
+        }
         
-    //     Order order = orderService.getOrderById(id);
-    //     if (order == null) {
-    //         return ResponseEntity.notFound().build();
-    //     }
+        Order order = orderService.getOrderById(id);
+        if (order == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单不存在"));
+        }
         
-    //     boolean success = orderService.cancelOrder(id);
-    //     if (success) {
-    //         // 恢复买家余额
-    //         userService.rechargeBalance(order.getBuyerId(), order.getTotalPrice());
+        boolean success = orderService.completeOrder(id);
+        if (success) {
+            logService.logOrderComplete(order.getBuyerId(), id);
+            return ResponseEntity.ok(new ApiResponse(true, "订单完成成功"));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单完成失败"));
+    }
+    
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
+        }
+        
+        Order order = orderService.getOrderById(id);
+        if (order == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "订单不存在"));
+        }
+        
+        boolean success = orderService.cancelOrder(id);
+        if (success) {
+            // 恢复买家余额并扣减卖家余额
+            userService.rechargeBalance(order.getBuyerId(), order.getTotalPrice());
+            userService.deductBalance(order.getSellerId(), order.getTotalPrice());
             
-    //         logService.logOrderCancel(order.getBuyerId(), id);
-    //         return ResponseEntity.ok(new ApiResponse(true, "订单取消成功"));
-    //     }
-    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "订单取消失败"));
-    // }
-    
-    // @PostMapping("/{id}/complete")
-    // public ResponseEntity<?> completeOrder(@PathVariable Long id) {
-    //     if (id == null || id <= 0) {
-    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
-    //     }
-        
-    //     Order order = orderService.getOrderById(id);
-    //     if (order == null) {
-    //         return ResponseEntity.notFound().build();
-    //     }
-        
-    //     boolean success = orderService.completeOrder(id);
-    //     if (success) {
-    //         // 将款项转给卖家
-    //         userService.rechargeBalance(order.getSellerId(), order.getTotalPrice());
-            
-    //         logService.logOrderComplete(order.getBuyerId(), id);
-    //         return ResponseEntity.ok(new ApiResponse(true, "订单完成成功"));
-    //     }
-    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "订单完成失败"));
-    // }
-    
-    // @GetMapping("/{id}/contact")
-    // public ResponseEntity<?> exchangeContactInfo(@PathVariable Long id) {
-    //     if (id == null || id <= 0) {
-    //         return ResponseEntity.badRequest().body(new ApiResponse(false, "订单ID无效"));
-    //     }
-        
-    //     String contactInfo = orderService.exchangeContactInfo(id);
-    //     if (contactInfo != null) {
-    //         Order order = orderService.getOrderById(id);
-    //         if (order != null) {
-    //             logService.logExchangeInfo(order.getBuyerId(), order.getSellerId());
-    //         }
-    //         return ResponseEntity.ok(new ApiResponse(true, contactInfo));
-    //     }
-    //     return ResponseEntity.badRequest().body(new ApiResponse(false, "无法获取联系方式"));
-    // }
+            logService.logOrderCancel(order.getBuyerId(), id);
+            return ResponseEntity.ok(new ApiResponse(true, "订单取消成功"));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "订单取消失败"));
+    }
     
     @GetMapping("/validate")
     public ResponseEntity<?> validateOrder(@RequestParam Long itemId, @RequestParam Long buyerId) {

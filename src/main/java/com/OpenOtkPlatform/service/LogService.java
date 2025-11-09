@@ -44,15 +44,18 @@ public class LogService {
     // }
 
     public void logRegister(Long userId) {
-        logUserOperation(SystemLog.AUTH_OPERATION_REGISTER, userId, "description: null");
+        logUserOperation(SystemLog.AUTH_OPERATION_REGISTER, userId,
+                String.format("User Register: %d", userId));
     }
 
     public void logLogin(Long userId) {
-        logUserOperation(SystemLog.AUTH_OPERATION_LOGIN, userId, "description: null");
+        logUserOperation(SystemLog.AUTH_OPERATION_LOGIN, userId,
+                String.format("User Login: %d", userId));
     }
 
     public void logLogout(Long userId) {
-        logUserOperation(SystemLog.AUTH_OPERATION_LOGOUT, userId, "description: null");
+        logUserOperation(SystemLog.AUTH_OPERATION_LOGOUT, userId,
+                String.format("User Logout: %d", userId));
     }
 
     // public void logUserDelete(Long userId) {
@@ -92,24 +95,24 @@ public class LogService {
                 String.format("orderId: %d", orderId));
     }
 
-    // public void logOrderConfirm(Long userId, Long orderId) {
-    //     logUserOperation(SystemLog.OPERATION_CONFIRM_ORDER, userId,
-    //             String.format("orderId: %d", orderId));
-    // }
+    public void logOrderConfirm(Long userId, Long orderId) {
+        logUserOperation(SystemLog.ORDER_OPERATION_CONFIRM, userId,
+                String.format("orderId: %d", orderId));
+    }
+
+    public void logOrderComplete(Long userId, Long orderId) {
+        logUserOperation(SystemLog.ORDER_OPERATION_COMPLETE, userId,
+                String.format("orderId: %d", orderId));
+    }
+
+    public void logOrderCancel(Long userId, Long orderId) {
+        logUserOperation(SystemLog.ORDER_OPERATION_CANCEL, userId,
+                String.format("orderId: %d", orderId));
+    }
 
     // public void logOrderUpdate(Long userId, Long orderId, String status) {
     //     logUserOperation(SystemLog.OPERATION_UPDATE_ORDER, userId,
     //             String.format("orderId: %d, status: %s", orderId, status));
-    // }
-
-    // public void logOrderCancel(Long userId, Long orderId) {
-    //     logUserOperation(SystemLog.OPERATION_CREATE_ORDER, userId,
-    //             String.format("orderId: %d", orderId));
-    // }
-
-    // public void logOrderComplete(Long userId, Long orderId) {
-    //     logUserOperation(SystemLog.OPERATION_CREATE_ORDER, userId,
-    //             String.format("orderId: %d", orderId));
     // }
 
     // public void logExchangeInfo(Long userId1, Long userId2) {
