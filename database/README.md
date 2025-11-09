@@ -19,8 +19,8 @@ OpenOtkPlatform 使用 MySQL 8.0 作为关系型数据库，采用 UTF-8 字符�
 ```properties
 # 数据库配置
 spring.datasource.url=jdbc:mysql://localhost:3306/platform?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-spring.datasource.username=root
-spring.datasource.password=OTAKU
+spring.datasource.username=database_username
+spring.datasource.password=database_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 # JPA配置

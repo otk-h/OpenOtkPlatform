@@ -84,8 +84,8 @@ mysql -u root -p -h localhost -P 3306 platform
 ```properties
 # 数据库配置
 spring.datasource.url=jdbc:mysql://localhost:3306/platform?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-spring.datasource.username=root
-spring.datasource.password=OTAKU
+spring.datasource.username=database_username
+spring.datasource.password=database_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 ```
 
